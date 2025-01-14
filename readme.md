@@ -70,7 +70,7 @@ The system allows users to register, login, and reset passwords, while admins ca
 
 ## Functionality
 
-### User Registration (`/register`)
+### User Registration (`https://rurblist-server.onrender.com/register`)
 
 **Input**: 
 - User details (email, password, username, etc.)
@@ -100,7 +100,7 @@ The system allows users to register, login, and reset passwords, while admins ca
 
 ---
 
-### Forgot Password (`/forgot-password`)
+### Forgot Password (`https://rurblist-server.onrender.com/forgot-password`)
 
 **Input**: 
 - User email address.
@@ -115,7 +115,7 @@ The system allows users to register, login, and reset passwords, while admins ca
 
 ---
 
-### Reset Password (`/reset-password/:token`)
+### Reset Password (`https://rurblist-server.onrender.com/reset-password/:token`)
 
 **Input**: 
 - Reset token and new password.
@@ -133,8 +133,8 @@ The system allows users to register, login, and reset passwords, while admins ca
 ### Admin User Management (Protected Routes)
 
 **Routes**:
-- `/all-users`: View all users.
-- `/user/:userId`: View, update, or delete a specific user.
+- `https://rurblist-server.onrender.com/all-users`: View all users.
+- `https://rurblist-server.onrender.com/user/:userId`: View, update, or delete a specific user.
 
 **Permissions**: 
 - Admin users can manage other users.
@@ -171,7 +171,7 @@ The system allows users to register, login, and reset passwords, while admins ca
 
 ### CORS
 
-- Currently set to only allow requests from `http://localhost:1212`. Ensure this configuration is updated when deploying to production.
+- Currently set to only allow requests from `*`. Ensure this configuration is updated when deploying to production.
 
 ---
 
