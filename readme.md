@@ -1,5 +1,10 @@
 # User Authentication and Management System Documentation
 
+```js
+// Advisable for frontend developer to store this information as a constant for ease of update
+// BASE_URL = "https://rurblist-server.onrender.com"
+```
+
 ## Table of Contents
 1. [Project Overview](#project-overview)
 2. [Technologies Used](#technologies-used)
