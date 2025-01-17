@@ -1,3 +1,10 @@
+# Rurblist
+
+Rurblist is an innovative online property management system designed to streamline property-related operations for both property managers and tenants. It provides a secure platform for managing property listings, handling tenant registrations, and processing payments. With features like user authentication, password recovery, and admin management tools, Rurblist ensures seamless interaction between all parties involved. 
+
+The platform is built with scalability and security in mind, making it suitable for small-scale landlords and large property management firms alike. Rurblist aims to revolutionize how properties are managed, improving efficiency and reducing administrative overhead while enhancing the user experience for tenants and property managers.
+
+
 # User Authentication and Management System Documentation
 
 ```js
@@ -51,27 +58,6 @@ The system allows users to register, login, and reset passwords, while admins ca
 - **CORS**: For handling cross-origin requests.
 
 ---
-
-## Project Structure
-
-```plaintext
-- controllers/
-    - auth.js            # User authentication logic (register, login, password reset)
-    - user.js            # User-related operations (CRUD for users)
-- lib/
-    - passwordUtils.js   # Utilities for password hashing and validation
-- routes/
-    - auth.js            # Authentication routes (login, register, password reset)
-    - users.js           # Admin routes for user management
-- schemas/
-    - User.js            # MongoDB User model schema
-- config/
-    - database.js        # MongoDB database connection setup
-- views/
-    - (ejs templates for rendering views like password reset page)
-- .env                  # Environment variables for sensitive data
-- server.js             # Main entry point (Express setup)
-```
 
 ## Functionality
 
@@ -207,3 +193,174 @@ The system allows users to register, login, and reset passwords, while admins ca
 - **Email Verification**: Add email verification to ensure users provide a valid email during registration.
 - **Multi-Factor Authentication (MFA)**: Enhance security with multi-factor authentication for sensitive actions.
 - **Rate Limiting**: Implement rate limiting to prevent brute-force attacks on login and password reset routes.
+
+
+# Properties API Documentation for Frontend Developers
+
+This document provides detailed information about the `Properties` API to help frontend developers integrate the backend services effectively. The API endpoints are designed to manage property listings, including creation, fetching, updating, deleting, commenting, and liking.
+
+---
+
+## Base URL
+**`https://rurblist-server.onrender.com/api/v1/properties`**
+
+---
+
+## Endpoints
+
+### 1. **Create a New Property**
+- **URL**: `/create`
+- **Method**: `POST`
+- **Description**: Creates a new property listing.
+- **Required Parameters** (in `req.body`):
+  - `title` (string): Title of the property.
+  - `description` (string): Detailed description of the property.
+  - `price` (number): Price of the property (must be positive).
+  - `location` (string): Address or general location of the property.
+  - `type` (string): Type of the property. Accepted values:
+    - `bedsitter`
+    - `self_contain`
+    - `flat`
+    - `boys_quarters`
+    - `duplexes`
+    - `mansion`
+  - `images` (optional, array of image IDs): IDs of uploaded property images.
+- **Response**:
+  - **201**: Property created successfully.
+  - **400**: Missing required fields.
+  - **500**: Server error.
+
+---
+
+### 2. **Fetch All Properties**
+- **URL**: `/`
+- **Method**: `GET`
+- **Description**: Retrieves all properties in the database, including associated images and comments.
+- **Response**:
+  - **200**: Returns an array of property objects.
+  - **500**: Failed to fetch properties.
+
+---
+
+### 3. **Fetch a Single Property by ID**
+- **URL**: `/:id`
+- **Method**: `GET`
+- **Description**: Retrieves details of a specific property by its ID.
+- **Required Parameters**:
+  - `id` (string): The ID of the property.
+- **Response**:
+  - **200**: Returns the property details.
+  - **404**: Property not found.
+  - **500**: Server error.
+
+---
+
+### 4. **Update a Property**
+- **URL**: `/:id`
+- **Method**: `PUT`
+- **Description**: Updates the details of a specific property by its ID.
+- **Required Parameters**:
+  - `id` (string): The ID of the property.
+  - Request body contains only the fields you wish to update (e.g., `title`, `price`, etc.).
+- **Response**:
+  - **200**: Property updated successfully.
+  - **400**: No fields provided for update.
+  - **404**: Property not found.
+  - **500**: Failed to update property.
+
+---
+
+### 5. **Delete a Property**
+- **URL**: `/:id`
+- **Method**: `DELETE`
+- **Description**: Deletes a specific property by its ID.
+- **Required Parameters**:
+  - `id` (string): The ID of the property.
+- **Response**:
+  - **200**: Property deleted successfully.
+  - **404**: Property not found.
+  - **500**: Failed to delete property.
+
+---
+
+### 6. **Add a Comment to a Property**
+- **URL**: `/:id/comment`
+- **Method**: `POST`
+- **Description**: Adds a comment to a specific property.
+- **Required Parameters**:
+  - `id` (string): The ID of the property.
+  - `comment` (string, in `req.body`): The comment text.
+- **Response**:
+  - **201**: Comment added successfully.
+  - **400**: Comment text is required.
+  - **404**: Property not found.
+  - **500**: Failed to add comment.
+
+---
+
+### 7. **Like a Property**
+- **URL**: `/:id/like`
+- **Method**: `POST`
+- **Description**: Increments the like count for a specific property.
+- **Required Parameters**:
+  - `id` (string): The ID of the property.
+- **Response**:
+  - **200**: Property liked successfully.
+  - **404**: Property not found.
+  - **500**: Failed to like property.
+
+---
+
+## Property Schema
+
+Here are the possible fields for a property object:
+
+- **`title`**: Title of the property.
+- **`description`**: Detailed description of the property.
+- **`price`**: Price of the property (positive number).
+- **`location`**: Address or general location of the property.
+- **`status`**: Status of the property. Possible values:
+  - `for_rent`
+  - `for_sale`
+  - `sold`
+- **`type`**: Type of the property. Possible values:
+  - `bedsitter`
+  - `self_contain`
+  - `flat`
+  - `boys_quarters`
+  - `duplexes`
+  - `mansion`
+- **`images`**: Array of image IDs.
+- **`comments`**: Array of comment IDs.
+- **`like`**: Number of likes for the property.
+- **`user`**: ID of the user who created the property.
+- **`latitude`**: Latitude coordinate (optional).
+- **`longitude`**: Longitude coordinate (optional).
+- **`createdAt`**: Timestamp when the property was created.
+- **`updatedAt`**: Timestamp when the property was last updated.
+
+---
+
+## Notes for Frontend Developers
+
+1. **Authentication**:
+   - Most endpoints require authentication.
+   - Pass the user token in the `Authorization` header for protected routes.
+
+2. **Image Handling**:
+   - Use the `images` array to send or display property images.
+   - Images are stored as IDs referencing the `PropertyImage` model.
+
+3. **Pagination and Filtering**:
+   - If required, implement pagination and filtering on the frontend using query parameters (e.g., `/api/properties?page=1&type=flat`).
+
+4. **Error Handling**:
+   - Handle error codes (`400`, `404`, `500`) gracefully on the frontend.
+   - Display user-friendly messages based on the error type.
+
+5. **Map Integration**:
+   - Use `latitude` and `longitude` to integrate map-based features (e.g., property location on Google Maps).
+
+---
+
+For further clarification, contact the backend team.
