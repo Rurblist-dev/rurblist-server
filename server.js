@@ -3,6 +3,7 @@ const dbConnection = require("./config/database").connection;
 const authRoute = require("./routes/auth");
 const usersRoute = require("./routes/users");
 const propertiesRoute = require("./routes/property");
+const tourRoute = require("./routes/tour");
 
 require('dotenv').config();
 
@@ -38,6 +39,7 @@ app.use((err, req, res, next) => {
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/users", usersRoute);
 app.use("/api/v1/properties", propertiesRoute);
+app.use("api/v1/tour", tourRoute);
 
 app.use("/", (req, res) => {
   res.send("This app runs fine 😇");
