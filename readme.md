@@ -1,17 +1,17 @@
 # Rurblist
 
-Rurblist is a online real estate market place designed to both streamline property search and make empowers realtors to showcase their professionalism, building a reputation that clients can trust.
+Rurblist is an online real estate marketplace designed to streamline property search and empower realtors to showcase their professionalism, building a reputation that clients can trust.
 
-Features are apartment listing, detailed home search, user authentication.
+Features include apartment listing, detailed home search, and user authentication.
 
-The platform is built with making access to dream home with just a click, making it suitable for all home searchers and realtors.
+The platform is built to make access to dream homes just a click away, making it suitable for all home searchers and realtors.
 
-Rurblist aim to bridge the gap between realtors and clients, fostering a community that values connection, trust, and growth.
+Rurblist aims to bridge the gap between realtors and clients, fostering a community that values connection, trust, and growth.
 
 # User Authentication and Management System Documentation
 
 ```js
-// Advisable for frontend developer to store this information as a constant for ease of update
+// Advisable for frontend developers to store this information as a constant for ease of update
 // BASE_URL = "https://rurblist-server.onrender.com"
 ```
 
@@ -679,3 +679,7 @@ const getAllTours = async () => {
 3. All fields are required when creating a new tour
 4. Fields are optional when updating an existing tour
 5. The API follows RESTful conventions with the base path `/api/v1/tour`
+6. Ensure that the `Content-Type` header is set to `application/json` for all requests
+7. Use appropriate HTTP methods (GET, POST, PUT, DELETE) for different operations
+8. Validate all input data on the client side before sending requests to the server
+9. Handle network errors and timeouts gracefully in the client application
