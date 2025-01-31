@@ -4,10 +4,27 @@ const Tour = require("../schemas/Tour");
 exports.createTour = async (req, res) => {
   try {
     const { datetime, email, phone, fullname } = req.body;
+
+    if (!datetime || !email || !phone || !fullname) {
+      return res.status(400).json({
+        success: false,
+        error: "All fields (datetime, email, phone, fullname) are required.",
+      });
+    }
+
     const tour = await Tour.create({ datetime, email, phone, fullname });
-    res.status(201).json({ success: true, data: tour });
+
+    res.status(201).json({
+      success: true,
+      message: "Tour created successfully.",
+      data: tour,
+    });
   } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: "Failed to create tour.",
+      details: error.message,
+    });
   }
 };
 
@@ -27,7 +44,9 @@ exports.getTourById = async (req, res) => {
     const { id } = req.params;
     const tour = await Tour.findById(id);
     if (!tour) {
-      return res.status(404).json({ success: false, message: "Tour not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Tour not found" });
     }
     res.status(200).json({ success: true, data: tour });
   } catch (error) {
@@ -44,7 +63,9 @@ exports.updateTour = async (req, res) => {
       runValidators: true,
     });
     if (!updatedTour) {
-      return res.status(404).json({ success: false, message: "Tour not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Tour not found" });
     }
     res.status(200).json({ success: true, data: updatedTour });
   } catch (error) {
@@ -58,9 +79,13 @@ exports.deleteTour = async (req, res) => {
     const { id } = req.params;
     const deletedTour = await Tour.findByIdAndDelete(id);
     if (!deletedTour) {
-      return res.status(404).json({ success: false, message: "Tour not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Tour not found" });
     }
-    res.status(200).json({ success: true, message: "Tour deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Tour deleted successfully" });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

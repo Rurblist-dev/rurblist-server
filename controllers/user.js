@@ -24,10 +24,13 @@ const getUser = (req, res, next) => {
     });
 };
 
-// Get User Id
-const getUserID = (req, res, next) => {
-  verifyToken(req, res, () => {
-    res.status(200).json({ userId: req.user.id });
+const getUserID = (req, res) => {
+  verifyToken(req, res, (err) => {
+    if (err) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    res.status(200).json({ "userId": req.user.id });
   });
 };
 
@@ -60,21 +63,17 @@ const updateUser = async (req, res, next) => {
       );
 
       if (updatedUser) {
-        res
-          .status(200)
-          .json({
-            message: "Successful",
-            status: 200,
-            detail: `User was updated successfully`,
-          });
+        res.status(200).json({
+          message: "Successful",
+          status: 200,
+          detail: `User was updated successfully`,
+        });
       } else {
-        res
-          .status(404)
-          .json({
-            message: "User Not Found",
-            status: 404,
-            detail: `The User with the id ${req.params.userId} was not found`,
-          });
+        res.status(404).json({
+          message: "User Not Found",
+          status: 404,
+          detail: `The User with the id ${req.params.userId} was not found`,
+        });
       }
     } else {
       const updatedUser = await User.findByIdAndUpdate(
@@ -84,21 +83,17 @@ const updateUser = async (req, res, next) => {
       );
 
       if (updatedUser) {
-        res
-          .status(200)
-          .json({
-            message: "Successful",
-            status: 200,
-            detail: `User was updated successfully`,
-          });
+        res.status(200).json({
+          message: "Successful",
+          status: 200,
+          detail: `User was updated successfully`,
+        });
       } else {
-        res
-          .status(404)
-          .json({
-            message: "User Not Found",
-            status: 404,
-            detail: `The User with the id ${req.params.userId} was not found`,
-          });
+        res.status(404).json({
+          message: "User Not Found",
+          status: 404,
+          detail: `The User with the id ${req.params.userId} was not found`,
+        });
       }
     }
   } catch (error) {
@@ -111,13 +106,11 @@ const updateUser = async (req, res, next) => {
 const deleteUser = (req, res, next) => {
   User.findByIdAndDelete(req.params.userId)
     .then(() => {
-      res
-        .status(200)
-        .json({
-          message: "Successful",
-          status: 200,
-          detail: "User successfully deleted",
-        });
+      res.status(200).json({
+        message: "Successful",
+        status: 200,
+        detail: "User successfully deleted",
+      });
     })
     .catch((err) => next(err));
 };

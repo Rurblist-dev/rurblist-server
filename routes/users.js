@@ -13,10 +13,10 @@ const {
 
 const router = express.Router();
 
-router.get("/all-users", verifyAdmin, getAllUsers);
-router.get("/user/:userId", verifyToken, getUser);
-router.put("/user/:userId", verifyToken, updateUser);
-router.delete("/user/:userId", verifyAdmin, deleteUser);
+router.get("/all-users", verifyToken, getAllUsers);
 router.get('/user-id', verifyToken, getUserID);
+router.get("/:userId", verifyToken, getUser);
+router.put("/:userId", verifyToken, updateUser);
+router.delete("/:userId", verifyAdmin, deleteUser);
 
 module.exports = router;

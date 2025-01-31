@@ -215,9 +215,10 @@ const loginUser = (req, res, next) => {
 
       if (isValid) {
         const token = jwt.sign(
-          { id: user._id, isAdmin: user.isAdmin, email: user.email },
+          { id: user._id.toString(), isAdmin: user.isAdmin, email: user.email },
           process.env.JWT_SECRET
         );
+        
         res.status(200).json({
           message: "Success",
           status: 200,

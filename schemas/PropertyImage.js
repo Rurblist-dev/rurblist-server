@@ -1,11 +1,10 @@
 const mongoose = require("mongoose");
 
-const propertyImageSchema = new mongoose.Schema({
-  url: {
-    type: String,
-    required: true,
-  },
-}, { timestamps: true });
+const PropertyImageSchema = new mongoose.Schema({
+  data: { type: Buffer, required: true },
+  contentType: { type: String, required: true },
+  fileName: { type: String, required: true },
+  size: { type: Number, required: true },
+});
 
-const propertyImage = mongoose.model("PropertyImage", propertyImageSchema);
-module.exports = propertyImage;
+module.exports = mongoose.model("PropertyImage", PropertyImageSchema);
