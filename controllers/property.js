@@ -33,6 +33,7 @@ const validatePropertyData = (data) => {
 
 // Utility function to clean up images if property creation fails
 const cleanupImages = async (imageIds) => {
+  if (!imageIds.length) return;
   try {
     await PropertyImage.deleteMany({ _id: { $in: imageIds } });
   } catch (error) {
@@ -42,48 +43,43 @@ const cleanupImages = async (imageIds) => {
 
 const createProperty = async (req, res) => {
   try {
-    // Validate user authentication
     if (!req.user || !req.user.id) {
-      return res.status(401).json({
-        error: "Authentication required",
-      });
+      return res.status(401).json({ error: "Authentication required" });
     }
 
-    // Validate property data
     const validationErrors = validatePropertyData(req.body);
-    if (validationErrors.length > 0) {
-      return res.status(400).json({
-        error: "Validation failed",
-        details: validationErrors,
-      });
+    if (validationErrors.length) {
+      return res
+        .status(400)
+        .json({ error: "Validation failed", details: validationErrors });
     }
 
     const { title, description, price, location, type, latitude, longitude } =
       req.body;
     const userId = req.user.id;
 
-    // Handle image uploads if present
     let imageIds = [];
-    if (req.files && req.files.length > 0) {
+    if (req.files?.length > 0) {
       try {
-        const imagePromises = req.files.map(async (file) => {
-          const newImage = new PropertyImage({
-            data: file.buffer,
-            contentType: file.mimetype,
-            fileName: file.originalname,
-            size: file.size,
-          });
-          return await newImage.save();
-        });
-
-        imageIds = await Promise.all(imagePromises);
+        imageIds = await Promise.all(
+          req.files.map(async (file) => {
+            return await new PropertyImage({
+              data: file.buffer,
+              contentType: file.mimetype,
+              fileName: file.originalname,
+              size: file.size,
+            }).save();
+          })
+        );
       } catch (error) {
         await cleanupImages(imageIds);
-        throw new Error("Failed to process images: " + error.message);
+        return res
+          .status(500)
+          .json({ error: "Failed to process images", details: error.message });
       }
     }
 
-    const newProperty = new Property({
+    const newProperty = await new Property({
       title,
       description,
       price: parseFloat(price),
@@ -94,34 +90,22 @@ const createProperty = async (req, res) => {
       latitude: latitude ? parseFloat(latitude) : undefined,
       longitude: longitude ? parseFloat(longitude) : undefined,
       status: "for_sale",
-    });
-
-    await newProperty.save();
-
-    const populatedProperty = await Property.findById(newProperty._id)
-      .populate({
-        path: "images",
-      })
-      .populate({
-        path: "user",
-        select: "name email",
-      });
+    }).save();
 
     res.status(201).json({
       success: true,
       message: "Property created successfully",
-      property: populatedProperty,
+      property: await newProperty.populate([
+        { path: "images" },
+        { path: "user", select: "name email" },
+      ]),
     });
   } catch (error) {
     console.error("Property creation error:", error);
-
     res.status(500).json({
       success: false,
       error: "Failed to create property",
-      details:
-        process.env.NODE_ENV === "development"
-          ? error.message
-          : "Internal server error",
+      details: error.message,
     });
   }
 };
@@ -150,8 +134,8 @@ const getAllProperties = async (req, res) => {
     const totalProperties = await Property.countDocuments(filterQuery);
 
     const properties = await Property.find(filterQuery)
-      .populate("images")
-      .populate("comments")
+      .populate("comments") // Ensure comments are populated
+      .populate("comments.user", "username email") // Populate comment owners
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
       .limit(limit)
@@ -216,7 +200,6 @@ const getPropertyById = async (req, res) => {
 };
 
 const updateProperty = async (req, res) => {
-
   const { id } = req.params;
   const updates = req.body;
 
@@ -296,21 +279,32 @@ const addCommentToProperty = async (req, res) => {
 
 const likeProperty = async (req, res) => {
   const { id } = req.params;
+  const userId = req.user?.id;
+
+  if (!userId)
+    return res.status(401).json({ error: "Authentication required" });
 
   try {
     const property = await Property.findById(id);
-    if (!property) {
+    if (!property)
       return res.status(404).json({ error: "Property not found." });
+
+    if (property.likes.includes(userId)) {
+      return res
+        .status(400)
+        .json({ error: "You have already liked this property." });
     }
 
-    property.like += 1;
+    property.likes.push(userId);
     await property.save();
 
     res
       .status(200)
-      .json({ message: `Property ${id} liked.`, likeCount: property.like });
+      .json({ message: `Property liked.`, likeCount: property.likes.length });
   } catch (error) {
-    res.status(500).json({ error: "Failed to like property.", details: error });
+    res
+      .status(500)
+      .json({ error: "Failed to like property.", details: error.message });
   }
 };
 

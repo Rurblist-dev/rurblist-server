@@ -48,12 +48,7 @@ const propertySchema = new mongoose.Schema(
       index: true,
       required: true,
     },
-    comments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Comment", // Reference to Comment schema
-      },
-    ],
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
     like: {
       type: Number,
       default: 0,

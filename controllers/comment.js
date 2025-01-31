@@ -1,32 +1,34 @@
 const Comment = require("../schemas/Comment");
+const Property = require("../schemas/Property");
 const mongoose = require("mongoose");
 
 // Create a comment
 const createComment = async (req, res) => {
   try {
-    const { comment, property } = req.body;
-    const userId = req.user.id; // Assuming user ID comes from the token
+    const { propertyId } = req.params;
+    const { comment } = req.body;
+    const userId = req.user.id;
 
-    // Validate data
-    if (!comment || !property) {
-      return res
-        .status(400)
-        .json({ error: "Comment and Property are required." });
-    }
-
-    // Create a new comment
     const newComment = new Comment({
       comment,
-      property,
+      property: propertyId,
       user: userId,
     });
 
-    await newComment.save();
+    const savedComment = await newComment.save();
 
-    return res.status(201).json(newComment);
+    // Push the comment ID to the property's comments array
+    await Property.findByIdAndUpdate(propertyId, {
+      $push: { comments: savedComment._id },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Comment added successfully.",
+      comment: savedComment,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Failed to create comment." });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 
