@@ -8,13 +8,6 @@ The platform is built to make access to dream homes just a click away, making it
 
 Rurblist aims to bridge the gap between realtors and clients, fostering a community that values connection, trust, and growth.
 
-# User Authentication and Management System Documentation
-
-```js
-// Advisable for frontend developers to store this information as a constant for ease of update
-// BASE_URL = "https://rurblist-server.onrender.com"
-```
-
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
@@ -34,6 +27,11 @@ Rurblist aims to bridge the gap between realtors and clients, fostering a commun
    4. [CORS](#cors)
 7. [What Needs to be Changed](#what-needs-to-be-changed)
 8. [Future Enhancements](#future-enhancements)
+9. [API Documentation](#api-documentation)
+   1. [User Authentication and Management](#user-authentication-and-management)
+   2. [Properties API](#properties-api)
+   3. [Tour Booking API](#tour-booking-api)
+   4. [Comments API](#comments-api)
 
 ---
 
@@ -220,157 +218,349 @@ The system allows users to register, login, and reset passwords, while admins ca
 - **Multi-Factor Authentication (MFA)**: Enhance security with multi-factor authentication for sensitive actions.
 - **Rate Limiting**: Implement rate limiting to prevent brute-force attacks on login and password reset routes.
 
-# Properties API Documentation for Frontend Developers
-
-This document provides detailed information about the `Properties` API to help frontend developers integrate the backend services effectively. The API endpoints are designed to manage property listings, including creation, fetching, updating, deleting, commenting, and liking.
-
 ---
 
-## Base URL
+## API Documentation
 
-**`https://rurblist-server.onrender.com/api/v1/properties`**
+### User Authentication and Management
 
----
+#### Register User
 
-## Endpoints
+- **URL**: `/register`
+- **Method**: `POST`
+- **Description**: Registers a new user.
+- **Request Body**:
+  ```json
+  {
+    "email": "user@example.com",
+    "password": "password123",
+    "name": "John Doe"
+  }
+  ```
+- **Response**:
+  - **201**: User successfully created.
+  - **400**: Missing required fields.
+  - **500**: Server error.
 
-### 1. **Create a New Property**
+#### Login User
 
-- **URL**: `/create`
+- **URL**: `/login`
+- **Method**: `POST`
+- **Description**: Logs in a user.
+- **Request Body**:
+  ```json
+  {
+    "username": "user@example.com",
+    "password": "password123"
+  }
+  ```
+- **Response**:
+  - **200**: User successfully logged in.
+  - **401**: Invalid credentials.
+  - **500**: Server error.
+
+#### Forgot Password
+
+- **URL**: `/forgot-password`
+- **Method**: `POST`
+- **Description**: Sends a password reset email.
+- **Request Body**:
+  ```json
+  {
+    "email": "user@example.com"
+  }
+  ```
+- **Response**:
+  - **200**: Password reset email sent.
+  - **404**: Email not found.
+  - **500**: Server error.
+
+#### Reset Password
+
+- **URL**: `/reset-password/:token`
+- **Method**: `POST`
+- **Description**: Resets the user's password.
+- **Request Body**:
+  ```json
+  {
+    "newPassword": "newpassword123"
+  }
+  ```
+- **Response**:
+  - **200**: Password successfully reset.
+  - **400**: Invalid or expired token.
+  - **500**: Server error.
+
+#### Get User ID
+
+- **URL**: `/api/v1/users/user-id`
+- **Method**: `GET`
+- **Description**: Retrieves the authenticated user's ID.
+- **Authentication**: Required
+- **Headers**:
+  ```json
+  {
+    "Authorization": "Bearer YOUR_JWT_TOKEN"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "userId": "user_id_here"
+  }
+  ```
+- **Error Response**:
+  ```json
+  {
+    "error": "Unauthorized"
+  }
+  ```
+
+Example usage:
+
+```javascript
+fetch("https://rurblist-server.onrender.com/api/v1/users/user-id", {
+  method: "GET",
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+})
+  .then((response) => response.json())
+  .then((data) => console.log(data))
+  .catch((error) => console.error("Error:", error));
+```
+
+### Properties API
+
+#### Create a New Property
+
+- **URL**: `/api/v1/properties/create`
 - **Method**: `POST`
 - **Description**: Creates a new property listing.
-- **Required Parameters** (in `req.body`):
-  - `title` (string): Title of the property.
-  - `description` (string): Detailed description of the property.
-  - `price` (number): Price of the property (must be positive).
-  - `location` (string): Address or general location of the property.
-  - `type` (string): Type of the property. Accepted values:
-    - `bedsitter`
-    - `self_contain`
-    - `flat`
-    - `boys_quarters`
-    - `duplexes`
-    - `mansion`
-  - `images` (optional, array of image IDs): IDs of uploaded property images.
+- **Request Body**:
+  ```json
+  {
+    "title": "Beautiful Apartment",
+    "description": "A beautiful apartment in the city center.",
+    "price": 100000,
+    "location": "City Center",
+    "type": "flat",
+    "latitude": 40.7128,
+    "longitude": -74.006
+  }
+  ```
 - **Response**:
   - **201**: Property created successfully.
   - **400**: Missing required fields.
   - **500**: Server error.
 
----
+#### Fetch All Properties
 
-### 2. **Fetch All Properties**
-
-- **URL**: `/`
+- **URL**: `/api/v1/properties`
 - **Method**: `GET`
-- **Description**: Retrieves all properties in the database, including associated images and comments.
+- **Description**: Retrieves all properties in the database.
 - **Response**:
   - **200**: Returns an array of property objects.
   - **500**: Failed to fetch properties.
 
----
+#### Fetch a Single Property by ID
 
-### 3. **Fetch a Single Property by ID**
-
-- **URL**: `/:id`
+- **URL**: `/api/v1/properties/:id`
 - **Method**: `GET`
 - **Description**: Retrieves details of a specific property by its ID.
-- **Required Parameters**:
-  - `id` (string): The ID of the property.
 - **Response**:
   - **200**: Returns the property details.
   - **404**: Property not found.
   - **500**: Server error.
 
----
+#### Update a Property
 
-### 4. **Update a Property**
-
-- **URL**: `/:id`
+- **URL**: `/api/v1/properties/:id`
 - **Method**: `PUT`
 - **Description**: Updates the details of a specific property by its ID.
-- **Required Parameters**:
-  - `id` (string): The ID of the property.
-  - Request body contains only the fields you wish to update (e.g., `title`, `price`, etc.).
+- **Request Body**:
+  ```json
+  {
+    "title": "Updated Title",
+    "price": 120000
+  }
+  ```
 - **Response**:
   - **200**: Property updated successfully.
   - **400**: No fields provided for update.
   - **404**: Property not found.
   - **500**: Failed to update property.
 
----
+#### Delete a Property
 
-### 5. **Delete a Property**
-
-- **URL**: `/:id`
+- **URL**: `/api/v1/properties/:id`
 - **Method**: `DELETE`
 - **Description**: Deletes a specific property by its ID.
-- **Required Parameters**:
-  - `id` (string): The ID of the property.
 - **Response**:
   - **200**: Property deleted successfully.
   - **404**: Property not found.
   - **500**: Failed to delete property.
 
----
+#### Add a Comment to a Property
 
-### 6. **Add a Comment to a Property**
-
-- **URL**: `/:id/comment`
+- **URL**: `/api/v1/properties/:id/comment`
 - **Method**: `POST`
 - **Description**: Adds a comment to a specific property.
-- **Required Parameters**:
-  - `id` (string): The ID of the property.
-  - `comment` (string, in `req.body`): The comment text.
+- **Request Body**:
+  ```json
+  {
+    "comment": "This is a great property!"
+  }
+  ```
 - **Response**:
   - **201**: Comment added successfully.
   - **400**: Comment text is required.
   - **404**: Property not found.
   - **500**: Failed to add comment.
 
----
+#### Like a Property
 
-### 7. **Like a Property**
-
-- **URL**: `/:id/like`
+- **URL**: `/api/v1/properties/:id/like`
 - **Method**: `POST`
 - **Description**: Increments the like count for a specific property.
-- **Required Parameters**:
-  - `id` (string): The ID of the property.
 - **Response**:
   - **200**: Property liked successfully.
   - **404**: Property not found.
   - **500**: Failed to like property.
 
----
+### Tour Booking API
 
-## Property Schema
+#### Create Tour
 
-Here are the possible fields for a property object:
+- **URL**: `/api/v1/tour`
+- **Method**: `POST`
+- **Description**: Creates a new tour booking.
+- **Request Body**:
+  ```json
+  {
+    "datetime": "2024-02-20T10:00:00Z",
+    "email": "john@example.com",
+    "phone": "+1234567890",
+    "fullname": "John Doe"
+  }
+  ```
+- **Response**:
+  - **201**: Tour created successfully.
+  - **400**: Missing required fields.
+  - **500**: Server error.
 
-- **`title`**: Title of the property.
-- **`description`**: Detailed description of the property.
-- **`price`**: Price of the property (positive number).
-- **`location`**: Address or general location of the property.
-- **`status`**: Status of the property. Possible values:
-  - `for_rent`
-  - `for_sale`
-  - `sold`
-- **`type`**: Type of the property. Possible values:
-  - `bedsitter`
-  - `self_contain`
-  - `flat`
-  - `boys_quarters`
-  - `duplexes`
-  - `mansion`
-- **`images`**: Array of image IDs.
-- **`comments`**: Array of comment IDs.
-- **`like`**: Number of likes for the property.
-- **`user`**: ID of the user who created the property.
-- **`latitude`**: Latitude coordinate (optional).
-- **`longitude`**: Longitude coordinate (optional).
-- **`createdAt`**: Timestamp when the property was created.
-- **`updatedAt`**: Timestamp when the property was last updated.
+#### Get All Tours
+
+- **URL**: `/api/v1/tour`
+- **Method**: `GET`
+- **Description**: Retrieves a list of all tour bookings.
+- **Response**:
+  - **200**: Returns an array of tour objects.
+  - **500**: Failed to fetch tours.
+
+#### Get Tour by ID
+
+- **URL**: `/api/v1/tour/:id`
+- **Method**: `GET`
+- **Description**: Retrieves a specific tour booking by its ID.
+- **Response**:
+  - **200**: Returns the tour details.
+  - **404**: Tour not found.
+  - **500**: Server error.
+
+#### Update Tour
+
+- **URL**: `/api/v1/tour/:id`
+- **Method**: `PUT`
+- **Description**: Updates an existing tour booking by its ID.
+- **Request Body**:
+  ```json
+  {
+    "datetime": "2024-02-21T11:00:00Z",
+    "email": "john.updated@example.com",
+    "phone": "+1987654321",
+    "fullname": "John Smith"
+  }
+  ```
+- **Response**:
+  - **200**: Tour updated successfully.
+  - **404**: Tour not found.
+  - **400**: Invalid data.
+  - **500**: Failed to update tour.
+
+#### Delete Tour
+
+- **URL**: `/api/v1/tour/:id`
+- **Method**: `DELETE`
+- **Description**: Deletes a specific tour booking by its ID.
+- **Response**:
+  - **200**: Tour deleted successfully.
+  - **404**: Tour not found.
+  - **500**: Failed to delete tour.
+
+### Comments API
+
+#### Create a Comment
+
+- **URL**: `/api/v1/comments/:propertyId`
+- **Method**: `POST`
+- **Description**: Creates a new comment for a property.
+- **Request Body**:
+  ```json
+  {
+    "comment": "This is a great property!"
+  }
+  ```
+- **Response**:
+  - **201**: Comment added successfully.
+  - **400**: Missing required fields.
+  - **500**: Server error.
+
+#### Get All Comments
+
+- **URL**: `/api/v1/comments`
+- **Method**: `GET`
+- **Description**: Retrieves all comments.
+- **Response**:
+  - **200**: Returns an array of comment objects.
+  - **500**: Failed to fetch comments.
+
+#### Get Comment by ID
+
+- **URL**: `/api/v1/comments/:commentId`
+- **Method**: `GET`
+- **Description**: Retrieves a specific comment by its ID.
+- **Response**:
+  - **200**: Returns the comment details.
+  - **404**: Comment not found.
+  - **500**: Server error.
+
+#### Update Comment
+
+- **URL**: `/api/v1/comments/:commentId`
+- **Method**: `PUT`
+- **Description**: Updates an existing comment by its ID.
+- **Request Body**:
+  ```json
+  {
+    "comment": "Updated comment text."
+  }
+  ```
+- **Response**:
+  - **200**: Comment updated successfully.
+  - **404**: Comment not found.
+  - **400**: Invalid data.
+  - **500**: Failed to update comment.
+
+#### Delete Comment
+
+- **URL**: `/api/v1/comments/:commentId`
+- **Method**: `DELETE`
+- **Description**: Deletes a specific comment by its ID.
+- **Response**:
+  - **200**: Comment deleted successfully.
+  - **404**: Comment not found.
+  - **500**: Failed to delete comment.
 
 ---
 
@@ -400,286 +590,229 @@ Here are the possible fields for a property object:
 
 ---
 
-# Tour Booking API Documentation
-
-## Base URL
-
-```
-https://rurblist-server.onrender.com/api/v1/tour/
-```
-
-## Authentication
-
-Currently, no authentication is required for the endpoints.
-
-## Endpoints
-
-### 1. Create Tour
-
-Creates a new tour booking in the system.
-
-**Endpoint:** `POST /tour`
-
-**Full URL:** `https://rurblist-server.onrender.com/api/v1/tour`
-
-**Request Body:**
-
-```json
-{
-  "datetime": "2024-02-20T10:00:00Z", // ISO 8601 date format
-  "email": "john@example.com",
-  "phone": "+1234567890",
-  "fullname": "John Doe"
-}
-```
-
-**Response (201 Created):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "65abc123def456gh789",
-    "datetime": "2024-02-20T10:00:00Z",
-    "email": "john@example.com",
-    "phone": "+1234567890",
-    "fullname": "John Doe"
-  }
-}
-```
-
-**Error Response (400 Bad Request):**
-
-```json
-{
-  "success": false,
-  "error": "Error message details"
-}
-```
-
-### 2. Get All Tours
-
-Retrieves a list of all tour bookings.
-
-**Endpoint:** `GET /tour`
-
-**Full URL:** `https://rurblist-server.onrender.com/api/v1/tour`
-
-**Response (200 OK):**
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "_id": "65abc123def456gh789",
-      "datetime": "2024-02-20T10:00:00Z",
-      "email": "john@example.com",
-      "phone": "+1234567890",
-      "fullname": "John Doe"
-    }
-    // ... more tours
-  ]
-}
-```
-
-**Error Response (500 Internal Server Error):**
-
-```json
-{
-  "success": false,
-  "error": "Error message details"
-}
-```
-
-### 3. Get Tour by ID
-
-Retrieves a specific tour booking by its ID.
-
-**Endpoint:** `GET /tour/:id`
-
-**Full URL:** `https://rurblist-server.onrender.com/api/v1/tour/:id`
-
-**Parameters:**
-
-- `id` (path parameter): The unique identifier of the tour
-
-**Response (200 OK):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "65abc123def456gh789",
-    "datetime": "2024-02-20T10:00:00Z",
-    "email": "john@example.com",
-    "phone": "+1234567890",
-    "fullname": "John Doe"
-  }
-}
-```
-
-**Error Response (404 Not Found):**
-
-```json
-{
-  "success": false,
-  "message": "Tour not found"
-}
-```
-
-### 4. Update Tour
-
-Updates an existing tour booking by its ID.
-
-**Endpoint:** `PUT /tour/:id`
-
-**Full URL:** `https://rurblist-server.onrender.com/api/v1/tour/:id`
-
-**Parameters:**
-
-- `id` (path parameter): The unique identifier of the tour
-
-**Request Body:**
-
-```json
-{
-  "datetime": "2024-02-21T11:00:00Z", // Optional
-  "email": "john.updated@example.com", // Optional
-  "phone": "+1987654321", // Optional
-  "fullname": "John Smith" // Optional
-}
-```
-
-**Response (200 OK):**
-
-```json
-{
-  "success": true,
-  "data": {
-    "_id": "65abc123def456gh789",
-    "datetime": "2024-02-21T11:00:00Z",
-    "email": "john.updated@example.com",
-    "phone": "+1987654321",
-    "fullname": "John Smith"
-  }
-}
-```
-
-**Error Responses:**
-
-- 404 Not Found:
-
-```json
-{
-  "success": false,
-  "message": "Tour not found"
-}
-```
-
-- 400 Bad Request:
-
-```json
-{
-  "success": false,
-  "error": "Error message details"
-}
-```
-
-### 5. Delete Tour
-
-Deletes a specific tour booking by its ID.
-
-**Endpoint:** `DELETE /tour/:id`
-
-**Full URL:** `https://rurblist-server.onrender.com/api/v1/tour/:id`
-
-**Parameters:**
-
-- `id` (path parameter): The unique identifier of the tour
-
-**Response (200 OK):**
-
-```json
-{
-  "success": true,
-  "message": "Tour deleted successfully"
-}
-```
-
-**Error Response (404 Not Found):**
-
-```json
-{
-  "success": false,
-  "message": "Tour not found"
-}
-```
-
-## Data Models
-
-### Tour Schema
-
-```javascript
-{
-  datetime: Date,    // Required
-  email: String,     // Required
-  phone: String,     // Required
-  fullname: String   // Required
-}
-```
-
 ## Example Usage (JavaScript/Fetch)
 
+### Create a New Property
+
 ```javascript
-const BASE_URL = "https://rurblist-server.onrender.com/api/v1/tour";
+const formData = new FormData();
+formData.append("title", "Beautiful Apartment");
+formData.append("description", "A beautiful apartment in the city center.");
+formData.append("price", 100000);
+formData.append("location", "City Center");
+formData.append("type", "flat");
+formData.append("latitude", 40.7128);
+formData.append("longitude", -74.006);
 
-// Create a new tour
-const createTour = async (tourData) => {
-  try {
-    const response = await fetch(BASE_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(tourData),
-    });
-    return await response.json();
-  } catch (error) {
-    console.error("Error creating tour:", error);
-  }
-};
+images.forEach((image) => {
+  formData.append("images", image);
+});
 
-// Get all tours
-const getAllTours = async () => {
-  try {
-    const response = await fetch(BASE_URL);
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching tours:", error);
-  }
-};
+fetch("https://rurblist-server.onrender.com/api/v1/properties/create", {
+  method: "POST",
+  body: formData,
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+})
+  .then((response) => response.json())
+  .then((data) => {
+    console.log(data);
+  })
+  .catch((error) => {
+    console.error("Error:", error);
+  });
 ```
 
-## Error Handling
+### Fetch All Properties
 
-- All endpoints return a `success` boolean indicating the status of the request
-- Failed requests include either an `error` or `message` field with details
-- Common HTTP status codes:
-  - 200: Successful request
-  - 201: Resource created successfully
-  - 400: Bad request / Invalid data
-  - 404: Resource not found
-  - 500: Server error
+```javascript
+fetch("https://rurblist-server.onrender.com/api/v1/properties", {
+  method: "GET",
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+})
+  .then((response) => response.json())
+  .then((data) => console.log(data))
+  .catch((error) => console.error("Error:", error));
+```
 
-## Notes
+### Get Property by ID
 
-1. All dates should be sent in ISO 8601 format
-2. Phone numbers should include country code
-3. All fields are required when creating a new tour
-4. Fields are optional when updating an existing tour
-5. The API follows RESTful conventions with the base path `/api/v1/tour`
-6. Ensure that the `Content-Type` header is set to `application/json` for all requests
-7. Use appropriate HTTP methods (GET, POST, PUT, DELETE) for different operations
-8. Validate all input data on the client side before sending requests to the server
-9. Handle network errors and timeouts gracefully in the client application
+```javascript
+const propertyId = "property_id_here";
+
+fetch(`https://rurblist-server.onrender.com/api/v1/properties/${propertyId}`, {
+  method: "GET",
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+})
+  .then((response) => response.json())
+  .then((data) => console.log(data))
+  .catch((error) => console.error("Error:", error));
+```
+
+### Update Property
+
+```javascript
+const propertyId = "property_id_here";
+const updateData = {
+  title: "Updated Title",
+  price: 150000,
+};
+
+fetch(`https://rurblist-server.onrender.com/api/v1/properties/${propertyId}`, {
+  method: "PUT",
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(updateData),
+})
+  .then((response) => response.json())
+  .then((data) => console.log(data))
+  .catch((error) => console.error("Error:", error));
+```
+
+### Delete Property
+
+```javascript
+const propertyId = "property_id_here";
+
+fetch(`https://rurblist-server.onrender.com/api/v1/properties/${propertyId}`, {
+  method: "DELETE",
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+})
+  .then((response) => response.json())
+  .then((data) => console.log(data))
+  .catch((error) => console.error("Error:", error));
+```
+
+### Add Comment to Property
+
+```javascript
+const propertyId = "property_id_here";
+const commentData = {
+  comment: "This is a great property!",
+};
+
+fetch(
+  `https://rurblist-server.onrender.com/api/v1/properties/${propertyId}/comment`,
+  {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(commentData),
+  }
+)
+  .then((response) => response.json())
+  .then((data) => console.log(data))
+  .catch((error) => console.error("Error:", error));
+```
+
+### Create Tour Booking
+
+```javascript
+const tourData = {
+  datetime: "2024-02-20T10:00:00Z",
+  email: "john@example.com",
+  phone: "+1234567890",
+  fullname: "John Doe",
+};
+
+fetch("https://rurblist-server.onrender.com/api/v1/tour", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify(tourData),
+})
+  .then((response) => response.json())
+  .then((data) => console.log(data))
+  .catch((error) => console.error("Error:", error));
+```
+
+## Common Error Responses
+
+### Authentication Error
+
+```json
+{
+  "success": false,
+  "error": "Unauthorized",
+  "message": "Authentication token is missing or invalid"
+}
+```
+
+### Validation Error
+
+```json
+{
+  "success": false,
+  "error": "Validation failed",
+  "details": ["Title is required", "Price must be a positive number"]
+}
+```
+
+### Not Found Error
+
+```json
+{
+  "success": false,
+  "error": "Not found",
+  "message": "The requested resource was not found"
+}
+```
+
+### Server Error
+
+```json
+{
+  "success": false,
+  "error": "Server error",
+  "message": "An unexpected error occurred"
+}
+```
+
+## Rate Limiting
+
+The API implements rate limiting to prevent abuse. Limits are as follows:
+
+- 100 requests per minute for authenticated users
+- 30 requests per minute for unauthenticated users
+
+When rate limit is exceeded, you'll receive:
+
+```json
+{
+  "success": false,
+  "error": "Too many requests",
+  "message": "Please try again later"
+}
+```
+
+## Testing the API
+
+For testing the API endpoints, you can use tools like:
+
+- Postman
+- cURL
+- Thunder Client (VS Code Extension)
+
+Example cURL command:
+
+```bash
+curl -X POST https://rurblist-server.onrender.com/api/v1/properties/create \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test Property","price":100000,"location":"Test Location","type":"flat"}'
+```

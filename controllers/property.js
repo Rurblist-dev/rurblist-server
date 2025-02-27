@@ -1,6 +1,14 @@
 const Property = require("../schemas/Property");
 const PropertyImage = require("../schemas/PropertyImage");
 const Comment = require("../schemas/Comment");
+const cloudinary = require("cloudinary").v2;
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // Validate property data
 const validatePropertyData = (data) => {
@@ -47,11 +55,15 @@ const createProperty = async (req, res) => {
       return res.status(401).json({ error: "Authentication required" });
     }
 
+    console.log("Files received:", req.files); // Add this for debugging
+
     const validationErrors = validatePropertyData(req.body);
     if (validationErrors.length) {
-      return res
-        .status(400)
-        .json({ error: "Validation failed", details: validationErrors });
+      return res.status(400).json({
+        success: false,
+        error: "Validation failed",
+        details: validationErrors,
+      });
     }
 
     const { title, description, price, location, type, latitude, longitude } =
@@ -62,20 +74,51 @@ const createProperty = async (req, res) => {
     if (req.files?.length > 0) {
       try {
         imageIds = await Promise.all(
-          req.files.map(async (file) => {
-            return await new PropertyImage({
-              data: file.buffer,
-              contentType: file.mimetype,
-              fileName: file.originalname,
-              size: file.size,
-            }).save();
+          req.files.map((file) => {
+            return new Promise((resolve, reject) => {
+              const uploadStream = cloudinary.uploader.upload_stream(
+                {
+                  resource_type: "auto",
+                  folder: "properties",
+                },
+                async (error, result) => {
+                  if (error) {
+                    console.error("Cloudinary upload error:", error);
+                    reject(error);
+                    return;
+                  }
+                  try {
+                    const image = await new PropertyImage({
+                      url: result.secure_url,
+                      fileName: file.originalname,
+                      size: file.size,
+                      cloudinaryId: result.public_id,
+                    }).save();
+                    resolve(image._id);
+                  } catch (err) {
+                    reject(err);
+                  }
+                }
+              );
+
+              // Handle stream errors
+              uploadStream.on("error", (error) => {
+                console.error("Upload stream error:", error);
+                reject(error);
+              });
+
+              // Write file buffer to stream
+              uploadStream.end(file.buffer);
+            });
           })
         );
       } catch (error) {
         await cleanupImages(imageIds);
-        return res
-          .status(500)
-          .json({ error: "Failed to process images", details: error.message });
+        return res.status(500).json({
+          success: false,
+          error: "Failed to process images",
+          details: error.message,
+        });
       }
     }
 
@@ -92,16 +135,19 @@ const createProperty = async (req, res) => {
       status: "for_sale",
     }).save();
 
+    const populatedProperty = await newProperty.populate([
+      { path: "images" },
+      { path: "user", select: "-salt -hash" },
+    ]);
+
     res.status(201).json({
       success: true,
       message: "Property created successfully",
-      property: await newProperty.populate([
-        { path: "images" },
-        { path: "user", select: "name email" },
-      ]),
+      property: populatedProperty,
     });
   } catch (error) {
     console.error("Property creation error:", error);
+    await cleanupImages(imageIds);
     res.status(500).json({
       success: false,
       error: "Failed to create property",
@@ -136,6 +182,8 @@ const getAllProperties = async (req, res) => {
     const properties = await Property.find(filterQuery)
       .populate("comments") // Ensure comments are populated
       .populate("comments.user", "username email") // Populate comment owners
+      .populate("images", "url") // Populate image URLs
+      .populate("user", "-salt -hash") // Populate user excluding sensitive info
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
       .limit(limit)
@@ -184,8 +232,9 @@ const getPropertyById = async (req, res) => {
 
   try {
     const property = await Property.findById(id)
-      .populate("images")
-      .populate("comments");
+      .populate("images", "url")
+      .populate("comments")
+      .populate("user", "-salt -hash -credentials");
 
     if (!property) {
       return res.status(404).json({ error: "Property not found." });
