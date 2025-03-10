@@ -49,10 +49,7 @@ const propertySchema = new mongoose.Schema(
       required: true,
     },
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
-    like: {
-      type: Number,
-      default: 0,
-    },
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // Changed from like to likes array
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     latitude: {
       type: Number,

@@ -330,30 +330,45 @@ const likeProperty = async (req, res) => {
   const { id } = req.params;
   const userId = req.user?.id;
 
-  if (!userId)
-    return res.status(401).json({ error: "Authentication required" });
+  if (!userId) {
+    return res.status(401).json({
+      success: false,
+      error: "Authentication required",
+    });
+  }
 
   try {
     const property = await Property.findById(id);
-    if (!property)
-      return res.status(404).json({ error: "Property not found." });
-
-    if (property.likes.includes(userId)) {
-      return res
-        .status(400)
-        .json({ error: "You have already liked this property." });
+    if (!property) {
+      return res.status(404).json({
+        success: false,
+        error: "Property not found.",
+      });
     }
 
-    property.likes.push(userId);
+    const likes = property.likes || [];
+    const userLiked = likes.includes(userId);
+
+    if (userLiked) {
+      property.likes = likes.filter((id) => id.toString() !== userId);
+    } else {
+      property.likes = [...likes, userId];
+    }
+
     await property.save();
 
-    res
-      .status(200)
-      .json({ message: `Property liked.`, likeCount: property.likes.length });
+    res.status(200).json({
+      success: true,
+      message: userLiked ? "Property unliked." : "Property liked.",
+      likeCount: property.likes.length,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to like property.", details: error.message });
+    console.error("Like property error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to like property.",
+      details: error.message,
+    });
   }
 };
 

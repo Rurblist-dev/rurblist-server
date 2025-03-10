@@ -3,6 +3,7 @@ const User = require("../schemas/User");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 
 require("dotenv").config();
 
@@ -309,31 +310,29 @@ const resetPassword = async (req, res, next) => {
 
     if (!user) {
       return res.status(400).json({
+        success: false,
         message: "Invalid or expired token",
-        status: 400,
-        detail:
-          "The password reset link is either invalid or has expired. Please request a new one.",
+        detail: "The password reset link is invalid or has expired.",
       });
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10); // Salt rounds set to 10
-
-    // Update the user's password and clear the reset token and expiration
-    user.password = hashedPassword;
-    user.resetToken = undefined; // Clear the reset token
-    user.tokenExpiration = undefined; // Clear the expiration time
-    await user.save(); // Save the updated user document
+    const { salt, hash } = genPassword(newPassword);
+    
+    user.salt = salt;
+    user.hash = hash;
+    user.resetToken = undefined;
+    user.tokenExpiration = undefined;
+    
+    await user.save();
 
     res.status(200).json({
-      message: "Password successfully reset",
-      status: 200,
-      detail:
-        "Your password has been reset successfully. You can now log in with your new password.",
+      success: true,
+      message: "Password reset successful",
+      detail: "You can now login with your new password",
     });
   } catch (error) {
-    console.error("Error resetting password:", error);
-    next(error); // Pass error to error handling middleware
+    console.error("Reset password error:", error);
+    next(error);
   }
 };
 
