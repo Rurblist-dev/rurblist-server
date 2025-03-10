@@ -422,11 +422,38 @@ fetch("https://rurblist-server.onrender.com/api/v1/users/user-id", {
 
 - **URL**: `/api/v1/properties/:id/like`
 - **Method**: `POST`
-- **Description**: Increments the like count for a specific property.
-- **Response**:
-  - **200**: Property liked successfully.
-  - **404**: Property not found.
-  - **500**: Failed to like property.
+- **Description**: Toggles like status for a property. If the user has already liked the property, sending this request will unlike it. If the user hasn't liked the property, it will add their like.
+- **Authentication**: Required (Bearer Token)
+- **Success Response**:
+  ```json
+  {
+    "success": true,
+    "message": "Property liked." // or "Property unliked."
+    "likeCount": 5 // Total number of likes after the operation
+  }
+  ```
+- **Error Response**:
+  - **401**: Authentication required
+  - **404**: Property not found
+  - **500**: Server error
+
+Example usage:
+
+```javascript
+const likeProperty = async (propertyId) => {
+  try {
+    const response = await fetch(`/api/v1/properties/${propertyId}/like`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.json();
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
+```
 
 ### Tour Booking API
 
