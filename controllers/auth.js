@@ -219,7 +219,7 @@ const loginUser = (req, res, next) => {
           { id: user._id.toString(), isAdmin: user.isAdmin, email: user.email },
           process.env.JWT_SECRET
         );
-        
+
         res.status(200).json({
           message: "Success",
           status: 200,
@@ -245,55 +245,50 @@ const loginUser = (req, res, next) => {
 const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
-
-    // Check if the email exists in the database
     const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(404).json({
-        message: "Email not found",
-        status: 404,
-        detail: "User with this email not found, use a valid mail",
+        success: false,
+        message: "No user found with this email address",
       });
     }
 
-    // Generate a password reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
+    const tokenExpiration = Date.now() + 3600000; // 1 hour
 
-    // Set token expiration to 1 hour from now
-    const tokenExpiration = Date.now() + 3600000; // 1 hour in milliseconds
-
-    // Store the token and expiration date in the database
     user.resetToken = resetToken;
-    user.tokenExpiration = new Date(tokenExpiration);
+    user.tokenExpiration = tokenExpiration;
     await user.save();
 
-    // Create the reset URL (make sure to replace 'yourwebsite.com' with your actual domain)
-    const resetUrl = `http://yourwebsite.com/reset-password/${resetToken}`;
+    // Create reset URL using environment variable
+    const resetUrl = `${process.env.SERVER_BASE_URL}/api/v1/auth/reset-password/${resetToken}`;
 
-    // Create email options
+    // Send email with styled template and user's name
     const mailOptions = {
-      from: process.env.EMAIL_USERNAME, // Sender address
+      from: process.env.EMAIL_USERNAME,
       to: email,
-      subject: "Password Reset Request",
-      text: `Hello, ${user.name}. Click the link below to reset your password:\n\n${resetUrl}`,
+      subject: "Reset Your Password - Rurblist",
       html: `
-        <p>Hello, ${user.name}.</p>
-        <p>Click the link below to reset your password:</p>
-        <a href="${resetUrl}">Reset Password</a>
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2>Reset Your Password</h2>
+          <p>Hello ${user.username},</p>
+          <p>We received a request to reset your password. Click the link below to set a new password:</p>
+          <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background: #ec6c10; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">Reset Password</a>
+          <p>This link will expire in 1 hour.</p>
+          <p>If you didn't request this, please ignore this email.</p>
+        </div>
       `,
     };
 
-    // Send the email
     await transporter.sendMail(mailOptions);
 
     res.status(200).json({
-      message: "Password reset email sent",
-      status: 200,
-      detail: "Password reset link has been sent to your mail",
+      success: true,
+      message: "Password reset link sent to your email",
     });
   } catch (error) {
-    console.error("Error sending email:", error);
-    next(error); // Pass the error to the error handler middleware
+    next(error);
   }
 };
 
@@ -317,18 +312,17 @@ const resetPassword = async (req, res, next) => {
     }
 
     const { salt, hash } = genPassword(newPassword);
-    
+
     user.salt = salt;
     user.hash = hash;
     user.resetToken = undefined;
     user.tokenExpiration = undefined;
-    
+
     await user.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Password reset successful",
-      detail: "You can now login with your new password",
+    // Render the success page instead of sending JSON response
+    res.render("reset-success", {
+      frontendUrl: process.env.FRONTEND_URL || process.env.SERVER_BASE_URL,
     });
   } catch (error) {
     console.error("Reset password error:", error);

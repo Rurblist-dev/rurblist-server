@@ -1,4 +1,5 @@
 const express = require("express");
+const path = require("path");
 const dbConnection = require("./config/database").connection;
 const authRoute = require("./routes/auth");
 const usersRoute = require("./routes/users");
@@ -13,6 +14,10 @@ const cors = require("cors");
 const app = express();
 
 const PORT = process.env.PORT || 8000;
+
+// Configure view engine
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
 app.use(cors({ origin: "*" }));
 app.use(express.urlencoded({ extended: true }));
@@ -43,8 +48,17 @@ app.use("/api/v1/properties", propertiesRoute);
 app.use("/api/v1/tour", tourRoute);
 app.use("/api/v1/comments", commentRoute);
 
-app.use("/", (req, res) => {
-  res.send("This app runs fine 😇");
+// Welcome route should be before the catch-all route
+app.get("/", (req, res) => {
+  res.render("welcome");
+});
+
+// Catch-all route should be last
+app.use("*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
 });
 
 app.listen(PORT, () => {

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Error - Rurblist</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 500px;
+        margin: 40px auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+      .error-icon {
+        color: #dc3545;
+        font-size: 48px;
+        margin: 20px 0;
+      }
+      .error-message {
+        color: #333;
+        margin: 20px 0;
+        line-height: 1.6;
+      }
+      .back-button {
+        background: #ec6c10;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 20px;
+      }
+      .back-button:hover {
+        background: #d65f0d;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="error-icon">⚠️</div>
+      <h2>Oops! Something went wrong</h2>
+      <div class="error-message">
+        <p><%= message || 'An unexpected error occurred.' %></p>
+      </div>
+      <a href="<%= process.env.FRONTEND_URL %>" class="back-button"
+        >Return to Home</a
+      >
+    </div>
+  </body>
+</html>

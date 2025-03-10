@@ -226,7 +226,7 @@ The system allows users to register, login, and reset passwords, while admins ca
 
 #### Register User
 
-- **URL**: `/register`
+- **URL**: `/api/v1/auth/register`
 - **Method**: `POST`
 - **Description**: Registers a new user.
 - **Request Body**:
@@ -244,7 +244,7 @@ The system allows users to register, login, and reset passwords, while admins ca
 
 #### Login User
 
-- **URL**: `/login`
+- **URL**: `/api/v1/auth/login`
 - **Method**: `POST`
 - **Description**: Logs in a user.
 - **Request Body**:
@@ -261,7 +261,7 @@ The system allows users to register, login, and reset passwords, while admins ca
 
 #### Forgot Password
 
-- **URL**: `/forgot-password`
+- **URL**: `/api/v1/auth/forgot-password`
 - **Method**: `POST`
 - **Description**: Sends a password reset email.
 - **Request Body**:
@@ -277,7 +277,7 @@ The system allows users to register, login, and reset passwords, while admins ca
 
 #### Reset Password
 
-- **URL**: `/reset-password/:token`
+- **URL**: `/api/v1/auth/reset-password/:token`
 - **Method**: `POST`
 - **Description**: Resets the user's password.
 - **Request Body**:
@@ -866,4 +866,88 @@ curl -X POST https://rurblist-server.onrender.com/api/v1/properties/create \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"Test Property","price":100000,"location":"Test Location","type":"flat"}'
+```
+
+### Password Reset Flow
+
+1. **Request Password Reset**
+
+   - User submits email through `/api/v1/auth/forgot-password`
+   - System validates email and generates reset token
+   - Reset link is sent to user's email
+   - Token expires in 1 hour
+
+2. **Reset Link Email**
+
+   - User receives styled email with reset link
+   - Link format: `${SERVER_BASE_URL}/api/v1/auth/reset-password/${resetToken}`
+   - Email includes security warning and expiration notice
+
+3. **Reset Password Form**
+
+   - User clicks link and sees password reset form
+   - Form includes:
+     - New password field
+     - Confirm password field
+     - Client-side validation (8 characters minimum)
+     - Password matching validation
+
+4. **Password Reset Completion**
+   - On successful reset:
+     - User sees success page
+     - Token is invalidated
+     - User is redirected to login page
+   - On failure:
+     - Error message is displayed
+     - User can retry
+
+**Example Usage:**
+
+```javascript
+// Request password reset
+const requestReset = async (email) => {
+  const response = await fetch("/api/v1/auth/forgot-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return response.json();
+};
+
+// Reset password
+const resetPassword = async (token, newPassword) => {
+  const response = await fetch(`/api/v1/auth/reset-password/${token}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ newPassword }),
+  });
+  return response.json();
+};
+```
+
+**Response Examples:**
+
+```json
+// Forgot Password Success
+{
+  "success": true,
+  "message": "Password reset link sent to your email"
+}
+
+// Reset Password Success
+{
+  "success": true,
+  "message": "Password reset successful",
+  "detail": "You can now login with your new password"
+}
+
+// Error Responses
+{
+  "success": false,
+  "message": "Invalid or expired token"
+}
+{
+  "success": false,
+  "message": "Email not found"
+}
 ```

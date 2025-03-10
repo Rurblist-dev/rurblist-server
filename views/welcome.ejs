@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Welcome to Rurblist API</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f5f5f5;
+      }
+      .hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+          url("https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-1.2.1");
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 100px 20px;
+        text-align: center;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+      h1 {
+        font-size: 3em;
+        margin-bottom: 20px;
+        color: #ec6c10;
+      }
+      .tagline {
+        font-size: 1.5em;
+        margin-bottom: 40px;
+      }
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-top: 50px;
+      }
+      .feature-card {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+      .feature-card h3 {
+        color: #ec6c10;
+        margin-bottom: 15px;
+      }
+      .cta-button {
+        display: inline-block;
+        background: #ec6c10;
+        color: white;
+        padding: 15px 30px;
+        border-radius: 5px;
+        text-decoration: none;
+        margin-top: 20px;
+        transition: background 0.3s;
+      }
+      .cta-button:hover {
+        background: #d65f0d;
+      }
+      .api-status {
+        background: #4caf50;
+        color: white;
+        padding: 10px;
+        text-align: center;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+      }
+      .docs-link {
+        text-align: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        margin-top: 20px;
+      }
+      .docs-link a {
+        color: #ec6c10;
+        text-decoration: none;
+        font-weight: bold;
+      }
+      .docs-link a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <h1>Welcome to Rurblist</h1>
+      <p class="tagline">Your Gateway to Dream Homes</p>
+      <div class="docs-link">
+        <p>Official API Endpoint</p>
+        <p>Visit our GitHub page for documentation details:</p>
+        <a
+          href="https://github.com/Chris-Imade/rurblist-server"
+          target="_blank"
+        >
+          github.com/Chris-Imade/rurblist-server
+        </a>
+      </div>
+      <a href="<%= process.env.FRONTEND_URL %>" class="cta-button"
+        >Explore Properties</a
+      >
+    </div>
+
+    <div class="container">
+      <div class="features">
+        <div class="feature-card">
+          <h3>Find Your Dream Home</h3>
+          <p>
+            Browse through our extensive collection of properties, from cozy
+            apartments to luxury villas.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>Professional Realtors</h3>
+          <p>
+            Connect with verified realtors who can guide you through your
+            property journey.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>Smart Search</h3>
+          <p>
+            Use our advanced filters to find properties that match your exact
+            requirements.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="api-status">API Status: Online 🟢</div>
+  </body>
+</html>

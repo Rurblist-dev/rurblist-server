@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Password Reset Successful - Rurblist</title>
+    <style>
+      body {
+        font-family: Arial;
+        max-width: 500px;
+        margin: 40px auto;
+        padding: 20px;
+        text-align: center;
+      }
+      .success-icon {
+        color: #4caf50;
+        font-size: 48px;
+        margin: 20px 0;
+      }
+      .message {
+        margin: 20px 0;
+        line-height: 1.6;
+      }
+      .login-button {
+        background: #ec6c10;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        border-radius: 4px;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="success-icon">✓</div>
+    <h2>Password Reset Successful!</h2>
+    <div class="message">
+      <p>Your password has been successfully updated.</p>
+      <p>You can now use your new password to log in to your account.</p>
+    </div>
+    <a href="<%= frontendUrl %>/login" class="login-button">Go to Login</a>
+  </body>
+</html>
