@@ -41,7 +41,7 @@ app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/users", usersRoute);
 app.use("/api/v1/properties", propertiesRoute);
 app.use("/api/v1/tour", tourRoute);
-app.use("/api/v1/comment", commentRoute);
+app.use("/api/v1/comments", commentRoute);
 
 app.use("/", (req, res) => {
   res.send("This app runs fine 😇");

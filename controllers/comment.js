@@ -5,30 +5,63 @@ const mongoose = require("mongoose");
 // Create a comment
 const createComment = async (req, res) => {
   try {
-    const { propertyId } = req.params;
+    // Get propertyId from URL parameters
+    const propertyId = req.params.id; // Changed from req.params.propertyId
+
+    if (!propertyId) {
+      return res.status(400).json({
+        success: false,
+        error: "Property ID is required",
+      });
+    }
+
+    // Validate if property exists
+    const property = await Property.findById(propertyId);
+    if (!property) {
+      return res.status(404).json({
+        success: false,
+        error: "Property not found",
+      });
+    }
+
     const { comment } = req.body;
     const userId = req.user.id;
 
-    const newComment = new Comment({
+    if (!comment) {
+      return res.status(400).json({
+        success: false,
+        error: "Comment text is required",
+      });
+    }
+
+    const newComment = await Comment.create({
       comment,
-      property: propertyId,
+      property: propertyId, // Explicitly set the property ID
       user: userId,
     });
 
-    const savedComment = await newComment.save();
-
-    // Push the comment ID to the property's comments array
+    // Update property with new comment
     await Property.findByIdAndUpdate(propertyId, {
-      $push: { comments: savedComment._id },
+      $push: { comments: newComment._id },
     });
+
+    // Fetch the populated comment
+    const populatedComment = await Comment.findById(newComment._id)
+      .populate("user", "name email")
+      .populate("property", "title");
 
     res.status(201).json({
       success: true,
-      message: "Comment added successfully.",
-      comment: savedComment,
+      message: "Comment added successfully",
+      comment: populatedComment,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error("Create comment error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to add comment",
+      details: error.message,
+    });
   }
 };
 
@@ -58,67 +91,95 @@ const getComments = async (req, res) => {
 // Get a single comment by ID
 const getComment = async (req, res) => {
   try {
-    const { commentId } = req.params;
+    const { id } = req.params; // Fix: Changed from destructuring commentId to id
 
-    if (!mongoose.Types.ObjectId.isValid(commentId)) {
-      return res.status(400).json({ error: "Invalid comment ID format." });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid comment ID format.",
+      });
     }
 
-    const comment = await Comment.findById(commentId)
-      .select("comment user property") // Select only specific fields
-      .populate({
-        path: "user",
-        select: "_id email username", // Only return user ID, email, and username
-      })
-      .populate({
-        path: "property",
-        select: "_id", // Only return property ID
-      })
-      .exec();
+    const comment = await Comment.findById(id)
+      .populate("user", "-salt -hash")
+      .populate("property", "title")
+      .lean();
 
     if (!comment) {
-      return res.status(404).json({ error: "Comment not found." });
+      return res.status(404).json({
+        success: false,
+        error: "Comment not found.",
+      });
     }
 
-    return res.status(200).json(comment);
+    return res.status(200).json({
+      success: true,
+      comment,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Failed to fetch comment." });
+    console.error("Get comment error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to fetch comment.",
+      details: error.message,
+    });
   }
 };
 
 // Update a comment by ID
 const updateComment = async (req, res) => {
   try {
-    const { commentId } = req.params;
-    const { comment } = req.body;
+    const { id } = req.params;
+    const { comment: commentText } = req.body;
     const userId = req.user.id;
 
-    if (!mongoose.Types.ObjectId.isValid(commentId)) {
-      return res.status(400).json({ error: "Invalid comment ID format." });
+    console.log("Update Comment - ID:", id);
+    console.log("Update Comment - Text:", commentText);
+    console.log("Update Comment - UserId:", userId);
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid comment ID format",
+      });
     }
 
-    const existingComment = await Comment.findById(commentId);
+    const existingComment = await Comment.findById(id);
 
     if (!existingComment) {
-      return res.status(404).json({ error: "Comment not found." });
+      return res.status(404).json({
+        success: false,
+        error: "Comment not found",
+      });
     }
 
-    // Check if the user is authorized to edit this comment
     if (existingComment.user.toString() !== userId) {
-      return res
-        .status(403)
-        .json({ error: "You are not authorized to edit this comment." });
+      return res.status(403).json({
+        success: false,
+        error: "You are not authorized to edit this comment",
+      });
     }
 
-    // Update the comment
-    existingComment.comment = comment || existingComment.comment;
-    await existingComment.save();
+    const updatedComment = await Comment.findByIdAndUpdate(
+      id,
+      { comment: commentText },
+      { new: true }
+    )
+      .populate("user", "-salt -hash")
+      .populate("property", "title");
 
-    return res.status(200).json(existingComment);
+    return res.status(200).json({
+      success: true,
+      message: "Comment updated successfully",
+      comment: updatedComment,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Failed to update comment." });
+    console.error("Update comment error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to update comment",
+      details: error.message,
+    });
   }
 };
 

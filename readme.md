@@ -502,65 +502,89 @@ fetch("https://rurblist-server.onrender.com/api/v1/users/user-id", {
 
 #### Create a Comment
 
-- **URL**: `/api/v1/comments/:propertyId`
+- **URL**: `/api/v1/comments/properties/:id`
 - **Method**: `POST`
-- **Description**: Creates a new comment for a property.
+- **Description**: Creates a new comment for a property
+- **Authentication**: Required (Bearer Token)
 - **Request Body**:
   ```json
   {
     "comment": "This is a great property!"
   }
   ```
-- **Response**:
-  - **201**: Comment added successfully.
-  - **400**: Missing required fields.
-  - **500**: Server error.
+- **Success Response**:
+  ```json
+  {
+    "success": true,
+    "message": "Comment added successfully",
+    "comment": {
+      "_id": "comment_id",
+      "comment": "This is a great property!",
+      "user": {
+        "name": "User Name",
+        "email": "user@example.com"
+      },
+      "property": {
+        "title": "Property Title"
+      }
+    }
+  }
+  ```
 
-#### Get All Comments
+#### Get Comment
 
-- **URL**: `/api/v1/comments`
+- **URL**: `/api/v1/comments/:id`
 - **Method**: `GET`
-- **Description**: Retrieves all comments.
-- **Response**:
-  - **200**: Returns an array of comment objects.
-  - **500**: Failed to fetch comments.
-
-#### Get Comment by ID
-
-- **URL**: `/api/v1/comments/:commentId`
-- **Method**: `GET`
-- **Description**: Retrieves a specific comment by its ID.
-- **Response**:
-  - **200**: Returns the comment details.
-  - **404**: Comment not found.
-  - **500**: Server error.
+- **Description**: Retrieves a specific comment
+- **Authentication**: Required (Bearer Token)
+- **Success Response**:
+  ```json
+  {
+    "success": true,
+    "comment": {
+      "_id": "comment_id",
+      "comment": "Comment text",
+      "user": {
+        "name": "User Name",
+        "email": "user@example.com"
+      },
+      "property": {
+        "title": "Property Title"
+      }
+    }
+  }
+  ```
 
 #### Update Comment
 
-- **URL**: `/api/v1/comments/:commentId`
+- **URL**: `/api/v1/comments/:id`
 - **Method**: `PUT`
-- **Description**: Updates an existing comment by its ID.
+- **Description**: Updates an existing comment
+- **Authentication**: Required (Bearer Token)
 - **Request Body**:
   ```json
   {
-    "comment": "Updated comment text."
+    "comment": "Updated comment text"
   }
   ```
-- **Response**:
-  - **200**: Comment updated successfully.
-  - **404**: Comment not found.
-  - **400**: Invalid data.
-  - **500**: Failed to update comment.
-
-#### Delete Comment
-
-- **URL**: `/api/v1/comments/:commentId`
-- **Method**: `DELETE`
-- **Description**: Deletes a specific comment by its ID.
-- **Response**:
-  - **200**: Comment deleted successfully.
-  - **404**: Comment not found.
-  - **500**: Failed to delete comment.
+- **Success Response**:
+  ```json
+  {
+    "success": true,
+    "message": "Comment updated successfully",
+    "comment": {
+      "_id": "comment_id",
+      "comment": "Updated comment text",
+      "user": {
+        "name": "User Name",
+        "email": "user@example.com"
+      },
+      "property": {
+        "title": "Property Title"
+      }
+    }
+  }
+  ```
 
 ---
 

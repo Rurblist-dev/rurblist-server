@@ -7,21 +7,18 @@ const {
   deleteComment,
 } = require("../controllers/comment");
 const { verifyToken } = require("../lib/verifyToken");
+
 const router = express.Router();
 
-// Create a comment
-router.post("/", verifyToken, createComment);
-
-// Get all comments
+// Base route for all comments
 router.get("/", verifyToken, getComments);
 
-// Get a single comment by ID
-router.get("/:commentId", verifyToken, getComment);
+// Comment operations on a specific property
+router.post("/properties/:id", verifyToken, createComment);
 
-// Update a comment by ID
-router.put("/:commentId", verifyToken, updateComment);
-
-// Delete a comment by ID
-router.delete("/:commentId", verifyToken, deleteComment);
+// Operations on specific comments
+router.get("/:id", verifyToken, getComment);
+router.put("/:id", verifyToken, updateComment); // Changed from :commentId to :id
+router.delete("/:id", verifyToken, deleteComment); // Changed from :commentId to :id
 
 module.exports = router;

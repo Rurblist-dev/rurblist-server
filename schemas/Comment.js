@@ -4,7 +4,8 @@ const CommentSchema = new mongoose.Schema(
   {
     comment: {
       type: String,
-      required: true,
+      required: [true, "Comment text is required"],
+      trim: true,
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
