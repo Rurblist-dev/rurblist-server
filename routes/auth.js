@@ -31,13 +31,14 @@ router.get("/reset-password/:token", async (req, res) => {
 
     // Serve a simple HTML form for password reset
     res.status(200).render("reset-password", {
-      message: "Reset Your Password",
+      token: token, // Pass token to template
+      message: "Reset Your Password"
     });
   } catch (error) {
     console.error("Password reset page error:", error);
     // Send a generic error page
     res.status(500).render("error", {
-      message: "Something went wrong",
+      message: "Something went wrong"
     });
   }
 });
