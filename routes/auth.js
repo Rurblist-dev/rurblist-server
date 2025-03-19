@@ -29,16 +29,17 @@ router.get("/reset-password/:token", async (req, res) => {
       });
     }
 
-    // Serve a simple HTML form for password reset
+    // Render the reset password EJS template
     res.status(200).render("reset-password", {
       token: token, // Pass token to template
-      message: "Reset Your Password"
+      frontendUrl: process.env.FRONTEND_URL || "/",
+      message: "Reset Your Password",
     });
   } catch (error) {
     console.error("Password reset page error:", error);
     // Send a generic error page
     res.status(500).render("error", {
-      message: "Something went wrong"
+      message: "Something went wrong processing your request",
     });
   }
 });
@@ -49,6 +50,7 @@ router.post("/reset-password/:token", resetPassword);
 router.get("/reset-success", (req, res) => {
   res.status(200).render("reset-success", {
     message: "Password reset successful",
+    frontendUrl: process.env.FRONTEND_URL || "/",
   });
 });
 
