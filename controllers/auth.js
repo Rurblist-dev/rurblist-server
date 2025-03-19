@@ -342,179 +342,23 @@ const forgotPassword = async (req, res, next) => {
 const resetPassword = async (req, res, next) => {
   try {
     const { token } = req.params; // Token from URL
-
-    // If it's a GET request, render a password reset page
-    if (req.method === "GET") {
-      // Return an HTML page with a password reset form
-      return res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Reset Your Password - Rurblist</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              background-color: #f9f9f9;
-              margin: 0;
-              padding: 0;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              min-height: 100vh;
-            }
-            .container {
-              max-width: 500px;
-              width: 100%;
-              padding: 20px;
-              background: white;
-              border-radius: 8px;
-              box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            }
-            .header {
-              background-color: #ec6c10;
-              color: white;
-              padding: 15px 20px;
-              margin: -20px -20px 20px;
-              border-radius: 8px 8px 0 0;
-              text-align: center;
-            }
-            .form-group {
-              margin-bottom: 20px;
-            }
-            label {
-              display: block;
-              margin-bottom: 5px;
-              font-weight: bold;
-            }
-            input {
-              width: 100%;
-              padding: 10px;
-              border: 1px solid #ddd;
-              border-radius: 4px;
-              box-sizing: border-box;
-            }
-            button {
-              background-color: #ec6c10;
-              color: white;
-              padding: 12px 20px;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              width: 100%;
-              font-weight: bold;
-            }
-            .message {
-              margin-top: 15px;
-              padding: 10px;
-              border-radius: 4px;
-              display: none;
-            }
-            .error {
-              background-color: #ffebee;
-              color: #c62828;
-            }
-            .success {
-              background-color: #e8f5e9;
-              color: #2e7d32;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1 style="margin: 0">Rurblist</h1>
-              <p style="margin: 5px 0 0">Reset Your Password</p>
-            </div>
-            
-            <form id="resetForm">
-              <div class="form-group">
-                <label for="password">New Password</label>
-                <input type="password" id="password" name="newPassword" required minlength="6">
-              </div>
-              
-              <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" required>
-              </div>
-              
-              <button type="submit">Reset Password</button>
-            </form>
-            
-            <div id="message" class="message"></div>
-          </div>
-          
-          <script>
-            const form = document.getElementById('resetForm');
-            const message = document.getElementById('message');
-            
-            form.addEventListener('submit', async (e) => {
-              e.preventDefault();
-              
-              const password = document.getElementById('password').value;
-              const confirmPassword = document.getElementById('confirmPassword').value;
-              
-              // Check if passwords match
-              if (password !== confirmPassword) {
-                message.textContent = 'Passwords do not match.';
-                message.className = 'message error';
-                message.style.display = 'block';
-                return;
-              }
-              
-              try {
-                const response = await fetch(window.location.href, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({ newPassword: password }),
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                  message.textContent = data.message;
-                  message.className = 'message success';
-                  message.style.display = 'block';
-                  
-                  // Redirect after successful password reset
-                  setTimeout(() => {
-                    window.location.href = data.redirectUrl || '/';
-                  }, 3000);
-                } else {
-                  message.textContent = data.message || 'An error occurred.';
-                  message.className = 'message error';
-                  message.style.display = 'block';
-                }
-              } catch (error) {
-                message.textContent = 'An error occurred. Please try again.';
-                message.className = 'message error';
-                message.style.display = 'block';
-              }
-            });
-          </script>
-        </body>
-        </html>
-      `);
-    }
-
-    // For POST requests, process the password reset
     const { newPassword } = req.body; // New password from user input
+
+    console.log("Processing password reset request", {
+      token,
+      hasPassword: !!newPassword,
+    });
 
     // Check if token and newPassword are provided
     if (!token) {
-      return res.status(400).json({
-        success: false,
-        message: "Reset token is required",
+      return res.status(400).render("error", {
+        message: "Reset token is required"
       });
     }
 
     if (!newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "New password is required",
+      return res.status(400).render("error", {
+        message: "New password is required"
       });
     }
 
@@ -525,12 +369,15 @@ const resetPassword = async (req, res, next) => {
     });
 
     if (!user) {
+      console.log("Invalid or expired token", { token });
       return res.status(400).json({
         success: false,
         message: "Invalid or expired token",
         detail: "The password reset link is invalid or has expired.",
       });
     }
+
+    console.log("User found for password reset", { userId: user._id });
 
     // Generate new salt and hash for the password
     const { salt, hash } = genPassword(newPassword);
@@ -544,18 +391,23 @@ const resetPassword = async (req, res, next) => {
     // Save the updated user to database
     await user.save();
 
+    console.log("Password reset successful");
+
     // Return success response
     res.status(200).json({
       success: true,
       message: "Your password has been reset successfully",
-      redirectUrl: process.env.FRONTEND_URL || process.env.SERVER_BASE_URL,
+      redirectUrl:
+        `${process.env.FRONTEND_URL}/auth/signin` ||
+        "/api/v1/auth/reset-success",
     });
   } catch (error) {
     console.error("Reset password error:", error);
     res.status(500).json({
       success: false,
       message: "An error occurred while resetting your password",
-      error: error.message,
+      error:
+        process.env.NODE_ENV === "development" ? error.message : "Server error",
     });
   }
 };
