@@ -351,13 +351,15 @@ const resetPassword = async (req, res, next) => {
 
     // Check if token and newPassword are provided
     if (!token) {
-      return res.status(400).render("error", {
+      return res.status(400).json({
+        success: false,
         message: "Reset token is required"
       });
     }
 
     if (!newPassword) {
-      return res.status(400).render("error", {
+      return res.status(400).json({
+        success: false,
         message: "New password is required"
       });
     }
@@ -397,17 +399,14 @@ const resetPassword = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Your password has been reset successfully",
-      redirectUrl:
-        `${process.env.FRONTEND_URL}/auth/signin` ||
-        "/api/v1/auth/reset-success",
+      redirectUrl: `${process.env.FRONTEND_URL}/auth/signin` || "/api/v1/auth/reset-success",
     });
   } catch (error) {
     console.error("Reset password error:", error);
     res.status(500).json({
       success: false,
       message: "An error occurred while resetting your password",
-      error:
-        process.env.NODE_ENV === "development" ? error.message : "Server error",
+      error: process.env.NODE_ENV === "development" ? error.message : "Server error",
     });
   }
 };
