@@ -284,6 +284,12 @@ const forgotPassword = async (req, res, next) => {
           <p>Click the link below to reset your password:</p>
           <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background: #ec6c10; color: white; text-decoration: none; border-radius: 4px;">Reset Password</a>
           <p>This link will expire in 1 hour.</p>
+          <p style="margin-top: 20px; word-break: break-all;">
+            If the button above doesn't work, copy and paste this link into your browser:
+            <br>
+            <span style="color: #ec6c10;">${resetUrl}</span>
+          </p>
+          <p>If you didn't request this, please ignore this email.</p>
         </div>
       `,
     };
