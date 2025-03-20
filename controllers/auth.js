@@ -24,7 +24,7 @@ const sendWelcomeEmail = async (email, name) => {
     from: process.env.EMAIL_USERNAME,
     to: email,
     subject: "Welcome to Our Service",
-    text: `Hello, ${name || "Valued Customer"}. Welcome to our platform!`,
+    text: `Hello, ${name}. Welcome to our platform!`,
     html: `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -67,7 +67,7 @@ const sendWelcomeEmail = async (email, name) => {
       </tr>
       <tr>
         <td style="padding: 20px">
-          <p>Dear <strong>${name || "Valued Customer"}</strong>,</p>
+          <p>Dear <strong>[Username/Foundation Name]</strong>,</p>
 
           <p>
             Congratulations on joining Rurblist, your premier marketplace for
@@ -98,8 +98,7 @@ const sendWelcomeEmail = async (email, name) => {
 
           <p style="text-align: center; margin: 20px 0">
             <a
-              href="${process.env.FRONTEND_URL}"
-              target="_blank"
+              href="[Insert Link to Start Exploring Properties]"
               style="
                 background-color: #ec6c10;
                 color: #ffffff;
@@ -117,7 +116,7 @@ const sendWelcomeEmail = async (email, name) => {
             <a href="mailto:support@rurblist.com" style="color: #ec6c10"
               >support@rurblist.com</a
             ><br />
-            <strong>Phone:</strong> +2348154155124
+            <strong>Phone:</strong> 1-800-RURBLIST
           </p>
 
           <p>Thank you for choosing Rurblist!</p>
@@ -148,15 +147,9 @@ const sendWelcomeEmail = async (email, name) => {
             >
             |
             <a
-              href="https://www.instagram.com/rurblist"
+              href="[Insert Instagram Link]"
               style="color: #ec6c10; text-decoration: none"
               >Instagram</a
-            >
-            |
-            <a
-              href="[Insert LinkedIn Link]"
-              style="color: #ec6c10; text-decoration: none"
-              >LinkedIn</a
             >
           </p>
         </td>
@@ -184,14 +177,14 @@ const sendWelcomeEmail = async (email, name) => {
 };
 
 const registerUser = async (req, res, next) => {
-  const { password, email, username, ...otherDetails } = req.body;
+  const { password, email, name, ...otherDetails } = req.body;
 
   try {
     // Generate salt and hash for the password
     const { salt, hash } = genPassword(password);
 
     // Create user credentials
-    const userCred = { salt, hash, email, username, ...otherDetails };
+    const userCred = { salt, hash, email, name, ...otherDetails };
 
     // Create a new user instance
     const userInstance = new User(userCred);
@@ -200,7 +193,7 @@ const registerUser = async (req, res, next) => {
     await userInstance.save();
 
     // Send a welcome email
-    await sendWelcomeEmail(email, username);
+    await sendWelcomeEmail(email, name);
 
     // Respond with success
     res.status(201).json({
@@ -276,54 +269,21 @@ const forgotPassword = async (req, res, next) => {
 
     user.resetToken = resetToken;
     user.tokenExpiration = tokenExpiration;
-    await user.save();
+    await user.save(); // Ensure the token and expiration are saved
 
-    // Create reset URL using environment variable
+    // Create reset URL using environment variableL}/api/v1/auth/reset-password/${resetToken}`;
     const resetUrl = `${process.env.SERVER_BASE_URL}/api/v1/auth/reset-password/${resetToken}`;
-
-    // Get a proper display name from user data
-    const usernameIsFullName = user.username && user.username.includes(" ");
-    const displayName =
-      user.name ||
-      (usernameIsFullName ? user.username : null) ||
-      email.split("@")[0];
-
-    // Send email with styled template and proper name
     const mailOptions = {
-      from: process.env.EMAIL_USERNAME,
+      // Send email with styled template and user's name
       to: email,
       subject: "Reset Your Password - Rurblist",
       html: `
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif; color: #333; background-color: #f9f9f9;">
-          <div style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <div style="padding: 20px; text-align: center; background-color: #ec6c10; color: #ffffff;">
-              <h1 style="margin: 0">Rurblist</h1>
-              <p style="margin: 5px 0 0 0">Password Reset</p>
-            </div>
-            
-            <div style="padding: 20px;">
-              <h2>Reset Your Password</h2>
-              <p>Hello ${displayName},</p>
-              <p>We received a request to reset your password. Click the button below to set a new password:</p>
-              
-              <div style="text-align: center; margin: 25px 0;">
-                <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background: #ec6c10; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">Reset Password</a>
-              </div>
-              
-              <p>If the button doesn't work, copy and paste this link into your browser:</p>
-              <p style="background-color: #f5f5f5; padding: 10px; border-radius: 4px; word-break: break-all; font-size: 12px;">${resetUrl}</p>
-              
-              <p>This link will expire in 1 hour.</p>
-              <p>If you didn't request this, please ignore this email.</p>
-              
-              <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0">
-              
-              <p style="font-size: 12px; color: #777; text-align: center;">
-                &copy; 2024 Rurblist. All rights reserved.<br>
-                Need help? Contact us at <a href="mailto:support@rurblist.com" style="color: #ec6c10;">support@rurblist.com</a>
-              </p>
-            </div>
-          </div>
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2>Reset Your Password</h2>
+          <p>Hello ${user.username || user.name},</p>
+          <p>Click the link below to reset your password:</p>
+          <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background: #ec6c10; color: white; text-decoration: none; border-radius: 4px;">Reset Password</a>
+          <p>This link will expire in 1 hour.</p>
         </div>
       `,
     };
@@ -341,72 +301,47 @@ const forgotPassword = async (req, res, next) => {
 
 const resetPassword = async (req, res, next) => {
   try {
-    const { token } = req.params; // Token from URL
-    const { newPassword } = req.body; // New password from user input
+    const { token } = req.params;
+    const { newPassword } = req.body;
 
-    console.log("Processing password reset request", {
-      token,
-      hasPassword: !!newPassword,
-    });
-
-    // Check if token and newPassword are provided
-    if (!token) {
-      return res.status(400).json({
-        success: false,
-        message: "Reset token is required"
-      });
-    }
-
-    if (!newPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "New password is required"
-      });
-    }
-
-    // Find the user with the provided reset token and check if it's not expired
+    // First find the user before doing anything
     const user = await User.findOne({
       resetToken: token,
-      tokenExpiration: { $gt: Date.now() }, // Check if the token is not expired
+      tokenExpiration: { $gt: Date.now() },
     });
 
     if (!user) {
-      console.log("Invalid or expired token", { token });
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or expired token",
-        detail: "The password reset link is invalid or has expired.",
+      return res.render("error", {
+        message: "Invalid or expired reset link",
+        frontendUrl: process.env.FRONTEND_URL,
       });
     }
 
-    console.log("User found for password reset", { userId: user._id });
+    // Only proceed if we have both token and password
+    if (!token || !newPassword) {
+      return res.render("error", {
+        message: "Missing required information",
+        frontendUrl: process.env.FRONTEND_URL,
+      });
+    }
 
-    // Generate new salt and hash for the password
     const { salt, hash } = genPassword(newPassword);
 
-    // Update user's password and clear reset token fields
+    // Update user info
     user.salt = salt;
     user.hash = hash;
     user.resetToken = undefined;
     user.tokenExpiration = undefined;
 
-    // Save the updated user to database
     await user.save();
 
-    console.log("Password reset successful");
-
-    // Return success response
-    res.status(200).json({
-      success: true,
-      message: "Your password has been reset successfully",
-      redirectUrl: `${process.env.FRONTEND_URL}/auth/signin` || "/api/v1/auth/reset-success",
-    });
+    // Instead of JSON response, redirect to success page
+    return res.redirect("/api/v1/auth/reset-success");
   } catch (error) {
     console.error("Reset password error:", error);
-    res.status(500).json({
-      success: false,
+    return res.render("error", {
       message: "An error occurred while resetting your password",
-      error: process.env.NODE_ENV === "development" ? error.message : "Server error",
+      frontendUrl: process.env.FRONTEND_URL,
     });
   }
 };
