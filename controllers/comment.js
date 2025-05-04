@@ -6,12 +6,20 @@ const mongoose = require("mongoose");
 const createComment = async (req, res) => {
   try {
     // Get propertyId from URL parameters
-    const propertyId = req.params.id; // Changed from req.params.propertyId
+    const propertyId = req.params.id;
 
     if (!propertyId) {
       return res.status(400).json({
         success: false,
         error: "Property ID is required",
+      });
+    }
+
+    // Validate property ID format
+    if (!propertyId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid property ID format",
       });
     }
 
@@ -34,9 +42,18 @@ const createComment = async (req, res) => {
       });
     }
 
+    // Trim comment and validate length
+    const trimmedComment = comment.trim();
+    if (trimmedComment.length < 2) {
+      return res.status(400).json({
+        success: false,
+        error: "Comment must be at least 2 characters long",
+      });
+    }
+
     const newComment = await Comment.create({
-      comment,
-      property: propertyId, // Explicitly set the property ID
+      comment: trimmedComment,
+      property: propertyId,
       user: userId,
     });
 
@@ -47,7 +64,7 @@ const createComment = async (req, res) => {
 
     // Fetch the populated comment
     const populatedComment = await Comment.findById(newComment._id)
-      .populate("user", "name email")
+      .populate("user", "username email")
       .populate("property", "title");
 
     res.status(201).json({
@@ -57,10 +74,22 @@ const createComment = async (req, res) => {
     });
   } catch (error) {
     console.error("Create comment error:", error);
+
+    // Handle mongoose validation errors
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((val) => val.message);
+      return res.status(400).json({
+        success: false,
+        error: "Validation failed",
+        details: messages,
+      });
+    }
+
     res.status(500).json({
       success: false,
       error: "Failed to add comment",
-      details: error.message,
+      details:
+        process.env.NODE_ENV === "development" ? error.message : "Server error",
     });
   }
 };
@@ -186,35 +215,54 @@ const updateComment = async (req, res) => {
 // Delete a comment by ID
 const deleteComment = async (req, res) => {
   try {
-    const { commentId } = req.params;
+    const { id } = req.params; // Fix: Changed from commentId to id based on routes
     const userId = req.user.id;
 
-    if (!mongoose.Types.ObjectId.isValid(commentId)) {
-      return res.status(400).json({ error: "Invalid comment ID format." });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid comment ID format.",
+      });
     }
 
-    // Attempt to delete the comment only if the user is the owner or an admin
-    const deletedComment = await Comment.findOneAndDelete({
-      _id: commentId,
-      $or: [
-        { user: userId },
-        { user: req.user.isAdmin ? { $exists: true } : null },
-      ],
-    });
-
-    if (!deletedComment) {
-      return res
-        .status(404)
-        .json({ error: "Comment not found or unauthorized action." });
+    // First verify the comment exists
+    const comment = await Comment.findById(id);
+    if (!comment) {
+      return res.status(404).json({
+        success: false,
+        error: "Comment not found.",
+      });
     }
+
+    // Check if user is authorized to delete
+    if (comment.user.toString() !== userId && !req.user.isAdmin) {
+      return res.status(403).json({
+        success: false,
+        error: "You are not authorized to delete this comment.",
+      });
+    }
+
+    // Remove comment from property first to maintain referential integrity
+    await Property.updateOne(
+      { _id: comment.property },
+      { $pull: { comments: id } }
+    );
+
+    // Now delete the comment
+    const deletedComment = await Comment.findByIdAndDelete(id);
 
     return res.status(200).json({
+      success: true,
       message: "Comment deleted successfully.",
-      deletedComment, // Optional: Remove if not needed
     });
   } catch (error) {
     console.error("Delete Comment Error:", error);
-    return res.status(500).json({ error: "Failed to delete comment." });
+    return res.status(500).json({
+      success: false,
+      error: "Failed to delete comment.",
+      details:
+        process.env.NODE_ENV === "development" ? error.message : "Server error",
+    });
   }
 };
 

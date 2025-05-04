@@ -180,14 +180,34 @@ const getAllProperties = async (req, res) => {
     const totalProperties = await Property.countDocuments(filterQuery);
 
     const properties = await Property.find(filterQuery)
-      .populate("comments") // Ensure comments are populated
-      .populate("comments.user", "username email") // Populate comment owners
-      .populate("images", "url") // Populate image URLs
-      .populate("user", "-salt -hash") // Populate user excluding sensitive info
+      .populate({
+        path: "comments",
+        populate: {
+          path: "user",
+          select: "username email",
+        },
+      })
+      .populate({
+        path: "images",
+        select: "url fileName size cloudinaryId",
+      })
+      .populate("user", "-salt -hash")
       .sort({ [sortBy]: sortOrder })
       .skip(skip)
       .limit(limit)
       .lean();
+
+    // Check for any missing image URLs and log warnings
+    properties.forEach((property) => {
+      if (property.images && property.images.length > 0) {
+        const missingUrlImages = property.images.filter((img) => !img.url);
+        if (missingUrlImages.length > 0) {
+          console.warn(
+            `Property ${property._id} has ${missingUrlImages.length} images with missing URLs`
+          );
+        }
+      }
+    });
 
     const totalPages = Math.ceil(totalProperties / limit);
     const hasNextPage = page < totalPages;
@@ -231,20 +251,58 @@ const getPropertyById = async (req, res) => {
   const { id } = req.params;
 
   try {
+    // Validate ID format
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid property ID format",
+      });
+    }
+
     const property = await Property.findById(id)
-      .populate("images", "url")
-      .populate("comments")
+      .populate({
+        path: "images",
+        select: "url fileName size cloudinaryId",
+      })
+      .populate({
+        path: "comments",
+        populate: {
+          path: "user",
+          select: "username email",
+        },
+      })
       .populate("user", "-salt -hash -credentials");
 
     if (!property) {
-      return res.status(404).json({ error: "Property not found." });
+      return res.status(404).json({
+        success: false,
+        error: "Property not found.",
+      });
     }
 
-    res.status(200).json({ property });
+    // Verify images are properly loaded
+    if (property.images && property.images.length > 0) {
+      // Check if any image is missing URL
+      const missingUrlImages = property.images.filter((img) => !img.url);
+      if (missingUrlImages.length > 0) {
+        console.warn(
+          `Property ${id} has ${missingUrlImages.length} images with missing URLs`
+        );
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      property,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to fetch property details.", details: error });
+    console.error("Property fetch error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch property details.",
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 
@@ -299,30 +357,72 @@ const deleteProperty = async (req, res) => {
 const addCommentToProperty = async (req, res) => {
   const { id } = req.params;
   const { comment } = req.body;
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({
+      success: false,
+      error: "Authentication required",
+    });
+  }
 
   if (!comment) {
-    return res.status(400).json({ error: "Comment is required." });
+    return res.status(400).json({
+      success: false,
+      error: "Comment text is required.",
+    });
   }
 
   try {
-    const newComment = new Comment({ text: comment });
-    await newComment.save();
-
-    const property = await Property.findById(id);
-    if (!property) {
-      return res.status(404).json({ error: "Property not found." });
+    // Validate ID format
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid property ID format",
+      });
     }
 
+    // First check if property exists
+    const property = await Property.findById(id);
+    if (!property) {
+      return res.status(404).json({
+        success: false,
+        error: "Property not found.",
+      });
+    }
+
+    // Create the comment with proper schema fields
+    const newComment = new Comment({
+      comment: comment, // Use the proper field name according to schema
+      property: id,
+      user: userId,
+    });
+
+    await newComment.save();
+
+    // Update property with new comment
     property.comments.push(newComment._id);
     await property.save();
 
-    res
-      .status(201)
-      .json({ message: "Comment added to property.", comment: newComment });
+    // Return populated comment for better frontend experience
+    const populatedComment = await Comment.findById(newComment._id).populate(
+      "user",
+      "username email"
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Comment added to property.",
+      comment: populatedComment,
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Failed to add comment to property.", details: error });
+    console.error("Add comment error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to add comment to property.",
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
 
