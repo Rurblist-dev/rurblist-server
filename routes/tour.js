@@ -6,6 +6,7 @@ const {
   getTourById,
   updateTour,
   deleteTour,
+  getTourByUserId,
 } = require("../controllers/tour");
 const { verifyToken } = require("../lib/verifyToken");
 
@@ -17,6 +18,9 @@ router.get("/", verifyToken, getAllTours);
 
 // Route to get a specific tour by ID
 router.get("/:id", verifyToken, getTourById);
+
+// Route to get the tours for a specific user
+router.get("/user/:id", verifyToken, getTourByUserId);
 
 // Route to update a specific tour by ID
 router.put("/:id", verifyToken, updateTour);

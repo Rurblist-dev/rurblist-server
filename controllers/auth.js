@@ -19,12 +19,14 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendWelcomeEmail = async (email, name) => {
+const sendWelcomeEmail = async (email, fullname) => {
+  const rurblistEmail = process.env.EMAIL_USERNAME;
+  const currentYear = new Date().getFullYear();
   const mailOptions = {
     from: process.env.EMAIL_USERNAME,
     to: email,
     subject: "Welcome to Our Service",
-    text: `Hello, ${name}. Welcome to our platform!`,
+    text: `Hello, ${fullname}. Welcome to our platform!`,
     html: `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -67,7 +69,7 @@ const sendWelcomeEmail = async (email, name) => {
       </tr>
       <tr>
         <td style="padding: 20px">
-          <p>Dear <strong>[Username/Foundation Name]</strong>,</p>
+          <p>Dear <strong style={{textTransform:capitalize}}">${fullname}</strong>,</p>
 
           <p>
             Congratulations on joining Rurblist, your premier marketplace for
@@ -98,7 +100,7 @@ const sendWelcomeEmail = async (email, name) => {
 
           <p style="text-align: center; margin: 20px 0">
             <a
-              href="[Insert Link to Start Exploring Properties]"
+              href="${process.env.FRONTEND_URL}/properties"
               style="
                 background-color: #ec6c10;
                 color: #ffffff;
@@ -113,8 +115,8 @@ const sendWelcomeEmail = async (email, name) => {
           <p>Need assistance? Our dedicated support team is here to help:</p>
           <p style="text-align: left; font-size: 14px; color: #333">
             <strong>Email:</strong>
-            <a href="mailto:support@rurblist.com" style="color: #ec6c10"
-              >support@rurblist.com</a
+            <a href="mailto:${rurblistEmail}" style="color: #ec6c10"
+              >${rurblistEmail}</a
             ><br />
             <strong>Phone:</strong> 1-800-RURBLIST
           </p>
@@ -164,7 +166,7 @@ const sendWelcomeEmail = async (email, name) => {
             font-size: 12px;
           "
         >
-          &copy; 2024 Rurblist. All rights reserved.
+          &copy; ${currentYear} Rurblist. All rights reserved.
         </td>
       </tr>
     </table>
@@ -177,14 +179,14 @@ const sendWelcomeEmail = async (email, name) => {
 };
 
 const registerUser = async (req, res, next) => {
-  const { password, email, name, ...otherDetails } = req.body;
+  const { password, email, fullname, ...otherDetails } = req.body;
 
   try {
     // Generate salt and hash for the password
     const { salt, hash } = genPassword(password);
 
     // Create user credentials
-    const userCred = { salt, hash, email, name, ...otherDetails };
+    const userCred = { salt, hash, email, fullname, ...otherDetails };
 
     // Create a new user instance
     const userInstance = new User(userCred);
@@ -193,7 +195,7 @@ const registerUser = async (req, res, next) => {
     await userInstance.save();
 
     // Send a welcome email
-    await sendWelcomeEmail(email, name);
+    await sendWelcomeEmail(email, fullname);
 
     // Respond with success
     res.status(201).json({

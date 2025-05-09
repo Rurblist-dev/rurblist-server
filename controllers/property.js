@@ -3,12 +3,28 @@ const PropertyImage = require("../schemas/PropertyImage");
 const Comment = require("../schemas/Comment");
 const cloudinary = require("cloudinary").v2;
 
+require("dotenv").config();
+
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: "dr24fhy6r",
+  api_key: "294382887911173",
+  api_secret: "pdvUixmm1YiEfT4ipu2w6CdMfeA",
+
+  // cloud_name: process.env.CLOUDINARY_NAME,
+  // api_key: process.env.CLOUDINARY_NAME_API_KEY,
+  // api_secret: process.env.CLOUDINARY_NAME_API_SECRET,
+
+  limits: {
+    fieldSize: 5 * 1024 * 1024, // Limit for individual field size (2MB)
+    fileSize: 5 * 1024 * 1024, // Limit for file size (5MB)
+    files: 10, // Limit for number of files
+    fields: 20, // Limit for number of non-file fields
+  },
 });
+// cloud_name: process.env.CLOUDINARY_NAME,
+// api_key: process.env.CLOUDINARY_NAME_API_KEY,
+// api_secret: process.env.CLOUDINARY_NAME_API_SECRET,
 
 // Validate property data
 const validatePropertyData = (data) => {
@@ -54,8 +70,6 @@ const createProperty = async (req, res) => {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ error: "Authentication required" });
     }
-
-    console.log("Files received:", req.files); // Add this for debugging
 
     const validationErrors = validatePropertyData(req.body);
     if (validationErrors.length) {
@@ -166,6 +180,15 @@ const getAllProperties = async (req, res) => {
 
     const filterQuery = {};
 
+    // Add search functionality
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, "i"); // Case-insensitive regex
+      filterQuery.$or = [
+        { title: searchRegex }, // Search in property title
+        { location: searchRegex }, // Search in property location
+      ];
+    }
+
     if (req.query.type) filterQuery.type = req.query.type;
     if (req.query.status) filterQuery.status = req.query.status;
     if (req.query.minPrice)
@@ -184,12 +207,12 @@ const getAllProperties = async (req, res) => {
         path: "comments",
         populate: {
           path: "user",
-          select: "username email",
+          select: "profileImg  fullname role",
         },
       })
       .populate({
         path: "images",
-        select: "url fileName size cloudinaryId",
+        select: "url fileName",
       })
       .populate("user", "-salt -hash")
       .sort({ [sortBy]: sortOrder })
@@ -472,6 +495,39 @@ const likeProperty = async (req, res) => {
   }
 };
 
+const getPropertiesByUserId = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const properties = await Property.find({ user: id })
+      .populate({
+        path: "images",
+        select: "url fileName",
+      })
+      .populate("user", "-salt -hash")
+      .lean();
+
+    if (!properties.length) {
+      return res.status(404).json({
+        success: false,
+        error: "No properties found for this user.",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      properties,
+    });
+  } catch (error) {
+    console.error("Error fetching properties by user ID:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch properties by user ID.",
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   createProperty,
   getAllProperties,
@@ -480,4 +536,5 @@ module.exports = {
   deleteProperty,
   addCommentToProperty,
   likeProperty,
+  getPropertiesByUserId,
 };

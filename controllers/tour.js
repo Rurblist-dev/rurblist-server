@@ -3,12 +3,31 @@ const Tour = require("../schemas/Tour");
 // Create a new tour
 exports.createTour = async (req, res) => {
   try {
-    const { datetime, email, phone, fullname } = req.body;
+    const {
+      datetime,
+      email,
+      phone,
+      fullname,
+      homeSeeker,
+      agent,
+      tourType,
+      property,
+    } = req.body;
 
-    if (!datetime || !email || !phone || !fullname) {
+    if (
+      !datetime ||
+      !email ||
+      !phone ||
+      !fullname ||
+      !homeSeeker ||
+      !agent ||
+      !tourType ||
+      !property
+    ) {
       return res.status(400).json({
         success: false,
-        error: "All fields (datetime, email, phone, fullname) are required.",
+        error:
+          "All fields (datetime, email, phone, fullname, agent,homeSeeker,) are required.",
       });
     }
 
@@ -28,7 +47,16 @@ exports.createTour = async (req, res) => {
       });
     }
 
-    const tour = await Tour.create({ datetime, email, phone, fullname });
+    const tour = await Tour.create({
+      datetime,
+      email,
+      phone,
+      fullname,
+      homeSeeker,
+      agent,
+      tourType,
+      property,
+    });
 
     res.status(201).json({
       success: true,
@@ -63,7 +91,37 @@ exports.getAllTours = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+exports.getTourByUserId = async (req, res) => {
+  const { id } = req.params;
 
+  try {
+    // const tours = await Tour.find({ sentToUser: id });
+    const populatedTours = await Tour.find({ homeSeeker: id })
+      .populate("homeSeeker", "fullname email profileImg phoneNumber")
+      .populate("agent", "fullname email profileImg phoneNumber")
+      .populate("property", "title description _id location");
+
+    if (!populatedTours.length) {
+      return res.status(404).json({
+        success: false,
+        error: "No tours found for this user.",
+      });
+    }
+    // console.log(populatedTours);
+
+    res.status(200).json({
+      success: true,
+      populatedTours,
+    });
+  } catch (error) {
+    console.error("Error fetching tours by user ID:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch tours by user ID.",
+      details: error.message,
+    });
+  }
+};
 // Get a single tour by ID
 exports.getTourById = async (req, res) => {
   try {

@@ -31,6 +31,26 @@ const tourSchema = new mongoose.Schema({
     type: String,
     required: true, // Ensure this field is mandatory; adjust as needed
   },
+  tourType: {
+    type: String,
+    required: true, // Ensure this field is mandatory; adjust as needed
+  },
+  property: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Property",
+    required: true, // Ensure this field is mandatory; adjust as needed
+  },
+
+  agent: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  homeSeeker: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
 });
 
 const Tour = mongoose.model("Tour", tourSchema);

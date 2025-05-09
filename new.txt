@@ -1,0 +1,26 @@
+* Tour Phone Number Validation:
+Added proper validation in the Tour schema with regex patterns
+Enhanced the Tour controller with proper validation checks
+Added meaningful error messages for phone format violations
+Added proper error handling for validation errors
+* Comments Functionality:
+Fixed the createComment method to properly validate inputs
+Enhanced error handling with proper response formats
+Fixed the deleteComment method to correctly use the route parameter
+Added proper authorization checks for comment deletion
+Fixed referential integrity by removing comments from properties
+* Image URL Issues:
+Enhanced populate queries to ensure image URLs are properly included
+Added debugging to identify missing URLs
+Fixed response format to be consistent throughout the API
+Added ID format validation to prevent invalid ObjectID errors
+* General Improvements:
+Enhanced CORS configuration to allow all necessary headers
+Added environment-based error details to hide sensitive information in production
+Made response formats consistent with success/error flags
+Added validation for MongoDB ObjectIDs across controllers
+These changes should fix the issues you were facing with image URLs, comments, and tour phone validation while maintaining all existing functionality. The code now has better error handling and validation, which should make it more robust.
+
+
+* Tour Phone Number Validation:
+

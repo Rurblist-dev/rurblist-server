@@ -11,6 +11,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
+    profileImg: { type: String },
+    fullname: {
+      type: String,
+    },
+
     salt: {
       type: String,
     },
@@ -24,13 +29,22 @@ const userSchema = new mongoose.Schema(
     address: {
       type: String,
     },
+    whatsAppNumber: {
+      type: Number,
+    },
     phoneNumber: {
-        type: Number,
+      type: Number,
     },
     role: {
-        type: String,
-        default: "home_seeker" // home_seeker || agent || landlord
+      type: String,
+      default: "home_seeker", // home_seeker || agent || landlord
     },
+    savedProperties: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Property", // Reference to Property schema
+      },
+    ],
     resetToken: {
       type: String, // This will store the password reset token
       required: false, // Not required initially

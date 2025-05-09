@@ -7,6 +7,7 @@ const {
   deleteProperty,
   addCommentToProperty,
   likeProperty,
+  getPropertiesByUserId, // Import the function
 } = require("../controllers/property");
 const { verifyToken } = require("../lib/verifyToken");
 const multer = require("multer");
@@ -54,7 +55,7 @@ const handleUpload = (req, res, next) => {
 
 // Property Routes
 router.post("/create", verifyToken, handleUpload, createProperty);
-router.get("/", verifyToken, getAllProperties);
+router.get("/", getAllProperties);
 router.get("/:id", verifyToken, getPropertyById);
 router.put("/:id", verifyToken, updateProperty);
 router.delete("/:id", verifyToken, deleteProperty);
@@ -62,5 +63,8 @@ router.delete("/:id", verifyToken, deleteProperty);
 // Additional Routes for Property Features
 router.post("/:id/comment", verifyToken, addCommentToProperty);
 router.post("/:id/like", verifyToken, likeProperty);
+
+// Route to get properties by user ID
+router.get("/user/:id", verifyToken, getPropertiesByUserId);
 
 module.exports = router;

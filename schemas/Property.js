@@ -57,6 +57,12 @@ const propertySchema = new mongoose.Schema(
     longitude: {
       type: Number,
     },
+    noOfBedrooms: {
+      type: Number,
+    },
+    noOfBathrooms: {
+      type: Number,
+    },
   },
   { timestamps: true }
 );
