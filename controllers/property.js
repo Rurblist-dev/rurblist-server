@@ -7,13 +7,9 @@ require("dotenv").config();
 
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: "dr24fhy6r",
-  api_key: "294382887911173",
-  api_secret: "pdvUixmm1YiEfT4ipu2w6CdMfeA",
-
-  // cloud_name: process.env.CLOUDINARY_NAME,
-  // api_key: process.env.CLOUDINARY_NAME_API_KEY,
-  // api_secret: process.env.CLOUDINARY_NAME_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_NAME_API_KEY,
+  api_secret: process.env.CLOUDINARY_NAME_API_SECRET,
 
   limits: {
     fieldSize: 5 * 1024 * 1024, // Limit for individual field size (2MB)
