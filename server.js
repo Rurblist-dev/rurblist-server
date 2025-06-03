@@ -27,6 +27,7 @@ app.set("views", path.join(__dirname, "views"));
 app.use(cookieParser());
 const allowedOrigins = [
   "https://www.rurblist.com", // your production frontend
+  "https://rurblist.com", // your production frontend
   "http://localhost:3000", // optional: your dev environment
 ];
 // Use the more robust cors middleware with configuration
