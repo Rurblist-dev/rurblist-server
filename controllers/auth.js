@@ -218,9 +218,10 @@ const loginUser = async (req, res, next) => {
   const { identifier, password } = req.body; // Use 'identifier' for both email and username
 
   // Allow login with either email or username
-  const query = identifier.includes("@")
-    ? { email: identifier }
-    : { username: identifier };
+  const query = { username: identifier };
+  //  identifier.includes("@")
+  //   ? { email: identifier }
+  //   : { username: identifier };
 
   try {
     const user = await User.findOne(query);
