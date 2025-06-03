@@ -24,22 +24,22 @@ const PORT = process.env.PORT || 8000;
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-app.use(cookieParser());
-const allowedOrigins = [
-  "https://www.rurblist.com", // your production frontend
-  "https://rurblist.com", // your production frontend
-  "http://localhost:3000", // optional: your dev environment
-];
+// const allowedOrigins = [
+//   "https://www.rurblist.com", // your production frontend
+//   "https://rurblist.com", // your production frontend
+//   "http://localhost:3000", // optional: your dev environment
+// ];
 // Use the more robust cors middleware with configuration
+// origin: function (origin, callback) {
+//   if (!origin || allowedOrigins.includes(origin)) {
+//     callback(null, true);
+//   } else {
+//     callback(new Error("Not allowed by CORS"));
+//   }
+// },
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: "https://www.rurblist.com",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
@@ -51,6 +51,7 @@ app.use(
     ],
   })
 );
+app.use(cookieParser());
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: "10mb" }));
