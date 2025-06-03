@@ -162,9 +162,9 @@ const updateComment = async (req, res) => {
     const { comment: commentText } = req.body;
     const userId = req.user.id;
 
-    console.log("Update Comment - ID:", id);
-    console.log("Update Comment - Text:", commentText);
-    console.log("Update Comment - UserId:", userId);
+    // console.log("Update Comment - ID:", id);
+    // console.log("Update Comment - Text:", commentText);
+    // console.log("Update Comment - UserId:", userId);
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({

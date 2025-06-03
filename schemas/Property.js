@@ -24,15 +24,37 @@ const propertySchema = new mongoose.Schema(
         message: "Price must be a positive number.",
       },
     },
+    agentFee: {
+      type: Number,
+      // required: true,
+      validate: {
+        validator: (value) => value > 0,
+        message: "Agent fee must be a positive number.",
+      },
+    },
     location: {
       type: String,
       required: true,
       index: true,
     },
+    bathrooms: {
+      type: Number,
+      // required: true,
+    },
+    bedrooms: {
+      type: Number,
+      // required: true,
+    },
+    paymentFrequency: {
+      type: String,
+      enum: ["per_year", "per_week", "per_month", "one_time"],
+      // default: "for_sale",
+      index: true,
+    },
     status: {
       type: String,
       enum: ["for_rent", "for_sale", "sold"],
-      default: "for_sale",
+      // default: "for_sale",
       index: true,
     },
     type: {
@@ -57,12 +79,23 @@ const propertySchema = new mongoose.Schema(
     longitude: {
       type: Number,
     },
-    noOfBedrooms: {
-      type: Number,
+
+    verificationStatus: {
+      type: String,
+      enum: ["unverified", "verified", "pending"],
+      default: "unverified",
     },
-    noOfBathrooms: {
-      type: Number,
+    isActive: {
+      type: Boolean,
     },
+    priorityLevel: {
+      type: Number,
+      default: 0,
+    },
+    priorityExpiresAt: {
+      type: Date, // Optional: track how long the priority should last
+    },
+    priorityStartedAt: { type: Date },
   },
   { timestamps: true }
 );

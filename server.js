@@ -1,11 +1,16 @@
 const express = require("express");
 const path = require("path");
+const cookieParser = require("cookie-parser");
 const dbConnection = require("./config/database").connection;
 const authRoute = require("./routes/auth");
 const usersRoute = require("./routes/users");
 const propertiesRoute = require("./routes/property");
+const adPackageRoute = require("./routes/propertyAdPackages");
+const payment = require("./routes/payment");
 const tourRoute = require("./routes/tour");
 const commentRoute = require("./routes/comment");
+
+require("./jobs/decayPriorityLevels.js");
 
 require("dotenv").config();
 
@@ -19,10 +24,13 @@ const PORT = process.env.PORT || 8000;
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+app.use(cookieParser());
+
 // Use the more robust cors middleware with configuration
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "*",
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
@@ -39,7 +47,10 @@ app.use(express.json({ limit: "10mb" }));
 
 // Backup CORS middleware for older browsers or special cases
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", process.env.FRONTEND_URL || "*");
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    process.env.FRONTEND_URL || "http://localhost:3000"
+  );
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, OPTIONS"
@@ -66,7 +77,9 @@ app.use((err, req, res, next) => {
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/users", usersRoute);
 app.use("/api/v1/properties", propertiesRoute);
+app.use("/api/v1/ad-package", adPackageRoute);
 app.use("/api/v1/tour", tourRoute);
+app.use("/api/v1/payment", payment);
 app.use("/api/v1/comments", commentRoute);
 
 // Welcome route should be before the catch-all route

@@ -1,9 +1,8 @@
 const { genPassword, validatePass } = require("../lib/passwordUtils");
 const User = require("../schemas/User");
-const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
-const crypto = require("crypto");
-const bcrypt = require("bcryptjs");
+const crypto = require("crypto"); // For random string tokens
+const jwt = require("jsonwebtoken"); // If you prefer JWTs
 
 require("dotenv").config();
 
@@ -19,14 +18,14 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendWelcomeEmail = async (email, fullname) => {
+const sendWelcomeEmail = async (email, firstName, lastName) => {
   const rurblistEmail = process.env.EMAIL_USERNAME;
   const currentYear = new Date().getFullYear();
   const mailOptions = {
     from: process.env.EMAIL_USERNAME,
     to: email,
     subject: "Welcome to Our Service",
-    text: `Hello, ${fullname}. Welcome to our platform!`,
+    text: `Hello, ${firstName} ${lastName}. Welcome to our platform!`,
     html: `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -69,7 +68,7 @@ const sendWelcomeEmail = async (email, fullname) => {
       </tr>
       <tr>
         <td style="padding: 20px">
-          <p>Dear <strong style={{textTransform:capitalize}}">${fullname}</strong>,</p>
+          <p>Dear <strong style={{textTransform:capitalize}}">${firstName}</strong>,</p>
 
           <p>
             Congratulations on joining Rurblist, your premier marketplace for
@@ -179,14 +178,21 @@ const sendWelcomeEmail = async (email, fullname) => {
 };
 
 const registerUser = async (req, res, next) => {
-  const { password, email, fullname, ...otherDetails } = req.body;
+  const { password, email, firstName, lastName, ...otherDetails } = req.body;
 
   try {
     // Generate salt and hash for the password
     const { salt, hash } = genPassword(password);
 
     // Create user credentials
-    const userCred = { salt, hash, email, fullname, ...otherDetails };
+    const userCred = {
+      salt,
+      hash,
+      email,
+      firstName,
+      lastName,
+      ...otherDetails,
+    };
 
     // Create a new user instance
     const userInstance = new User(userCred);
@@ -195,7 +201,7 @@ const registerUser = async (req, res, next) => {
     await userInstance.save();
 
     // Send a welcome email
-    await sendWelcomeEmail(email, fullname);
+    await sendWelcomeEmail(email, firstName, lastName);
 
     // Respond with success
     res.status(201).json({
@@ -208,50 +214,70 @@ const registerUser = async (req, res, next) => {
   }
 };
 
-const loginUser = (req, res, next) => {
-  const { username, password, email } = req.body;
+const loginUser = async (req, res, next) => {
+  const { identifier, password } = req.body; // Use 'identifier' for both email and username
 
-  // Allow login with either username or email
-  const query = email ? { email } : { username };
+  // Allow login with either email or username
+  const query = identifier.includes("@")
+    ? { email: identifier }
+    : { username: identifier };
 
-  User.findOne(query)
-    .then((user) => {
-      // Check if user exists
-      if (!user) {
-        return res.status(401).json({
-          message: "Failed",
-          status: 401,
-          details: "Invalid Credentials - User not found",
-        });
-      }
+  try {
+    const user = await User.findOne(query);
 
-      // Compare passwords match
-      const isValid = validatePass(password, user.hash, user.salt);
+    // Check if user exists
+    if (!user) {
+      return res.status(401).json({
+        message: "Failed",
+        status: 401,
+        details: "Invalid Credentials - User not found",
+      });
+    }
 
-      if (isValid) {
-        const token = jwt.sign(
-          { id: user._id.toString(), isAdmin: user.isAdmin, email: user.email },
-          process.env.JWT_SECRET
-        );
+    // Compare passwords match
+    const isValid = validatePass(password, user.hash, user.salt);
 
-        res.status(200).json({
-          message: "Success",
-          status: 200,
-          details: "User successfully logged in 😇",
-          token,
-        });
-      } else {
-        // Return an error for invalid password
-        res.status(401).json({
-          message: "Failed",
-          status: 401,
-          details: "Invalid Credentials - Wrong password",
-        });
-      }
-    })
-    .catch((err) => {
-      next(err);
-    });
+    if (isValid) {
+      const accessToken = jwt.sign(
+        { id: user._id.toString(), isAdmin: user.isAdmin, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: "15m" }
+      );
+      // Generate a refresh token (random string or JWT)
+      const refreshToken = crypto.randomBytes(64).toString("hex");
+
+      // Store in DB
+      user.refreshToken = refreshToken;
+      user.tokenExpiration = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+      await user.save();
+
+      // Send as HTTP-only cookie
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      });
+
+      res.status(200).json({
+        message: "Success",
+        status: 200,
+        details: "User successfully logged in 😇",
+        accessToken,
+        userId: user._id,
+        tokenExpiration: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      });
+    } else {
+      // Return an error for invalid password
+      res.status(401).json({
+        message: "Failed",
+        status: 401,
+        details: "Invalid Credentials - Wrong password",
+      });
+    }
+  } catch (err) {
+    next(err);
+  }
 };
 
 const forgotPassword = async (req, res, next) => {
@@ -354,9 +380,51 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+async function refreshToken(req, res) {
+  try {
+    const token = req.cookies.refreshToken;
+
+    if (!token)
+      return res.status(401).json({ message: "No refresh token provided" });
+
+    const user = await User.findOne({ refreshToken: token });
+
+    if (!user || user.tokenExpiration < Date.now()) {
+      return res
+        .status(403)
+        .json({ message: "Invalid or expired refresh token" });
+    }
+
+    const newAccessToken = jwt.sign(
+      { id: user._id, email: user.email, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    res.status(200).json({ accessToken: newAccessToken });
+  } catch (err) {
+    console.error("Refresh token error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+async function logoutUser(req, res) {
+  const { refreshToken } = req.cookies;
+  if (refreshToken) {
+    await User.updateOne(
+      { refreshToken },
+      { $unset: { refreshToken: "", tokenExpiration: "" } }
+    );
+    res.clearCookie("refreshToken");
+  }
+  res.json({ message: "Logged out" });
+}
+
 module.exports = {
   registerUser,
   loginUser,
   forgotPassword,
   resetPassword,
+  refreshToken,
+  logoutUser,
 };

@@ -2,6 +2,7 @@ const express = require("express");
 const {
   createProperty,
   getAllProperties,
+  getAllActiveProperties,
   getPropertyById,
   updateProperty,
   deleteProperty,
@@ -9,7 +10,7 @@ const {
   likeProperty,
   getPropertiesByUserId, // Import the function
 } = require("../controllers/property");
-const { verifyToken } = require("../lib/verifyToken");
+const { verifyToken, verifyAdmin } = require("../lib/verifyToken");
 const multer = require("multer");
 
 const router = express.Router();
@@ -55,7 +56,8 @@ const handleUpload = (req, res, next) => {
 
 // Property Routes
 router.post("/create", verifyToken, handleUpload, createProperty);
-router.get("/", getAllProperties);
+router.get("/", verifyAdmin, getAllProperties);
+router.get("/active", getAllActiveProperties);
 router.get("/:id", verifyToken, getPropertyById);
 router.put("/:id", verifyToken, updateProperty);
 router.delete("/:id", verifyToken, deleteProperty);

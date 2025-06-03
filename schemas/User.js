@@ -12,10 +12,13 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
     profileImg: { type: String },
-    fullname: {
+    firstName: {
       type: String,
     },
-
+    lastName: {
+      type: String,
+    },
+    about: { type: String },
     salt: {
       type: String,
     },
@@ -45,8 +48,23 @@ const userSchema = new mongoose.Schema(
         ref: "Property", // Reference to Property schema
       },
     ],
+    verificationStatus: {
+      type: String,
+      enum: [
+        "unverified",
+        "nin_verified",
+        "cac_verified",
+        "premium_verified",
+        "pending",
+      ],
+      default: "unverified",
+    },
     resetToken: {
       type: String, // This will store the password reset token
+      required: false, // Not required initially
+    },
+    refreshToken: {
+      type: String,
       required: false, // Not required initially
     },
     tokenExpiration: {

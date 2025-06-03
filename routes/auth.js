@@ -6,6 +6,7 @@ const {
   loginUser,
   forgotPassword,
   resetPassword,
+  refreshToken,
 } = require("../controllers/auth");
 
 // Remove the app.set lines - they're now in server.js
@@ -23,7 +24,7 @@ router.get("/reset-success", (req, res) => {
 
 // Update the reset password route
 router.get("/reset-password/:token", async (req, res) => {
-  console.log("Received get request for reset password");
+  // console.log("Received get request for reset password");
   try {
     const { token } = req.params;
     const user = await User.findOne({
@@ -52,5 +53,8 @@ router.get("/reset-password/:token", async (req, res) => {
 
 // Handle POST request for password reset
 router.post("/reset-password/:token", resetPassword);
+
+// 🔄 Add the refresh token route
+router.post("/refresh", refreshToken);
 
 module.exports = router;

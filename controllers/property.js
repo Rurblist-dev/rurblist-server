@@ -7,6 +7,9 @@ require("dotenv").config();
 
 // Configure Cloudinary
 cloudinary.config({
+  // cloud_name: "dr24fhy6r",
+  // api_key: "19784889215394",
+  // api_secret: "gn0Fgrd4QUOxBLhzYGj5pKGL7bs",
   cloud_name: process.env.CLOUDINARY_NAME,
   api_key: process.env.CLOUDINARY_NAME_API_KEY,
   api_secret: process.env.CLOUDINARY_NAME_API_SECRET,
@@ -30,7 +33,14 @@ const validatePropertyData = (data) => {
   if (!data.description?.trim()) errors.push("Description is required");
   if (!data.location?.trim()) errors.push("Location is required");
   if (!data.type?.trim()) errors.push("Property type is required");
-
+  if (!data.bathrooms?.trim()) errors.push("Property bathrooms is required");
+  if (!data.bedrooms?.trim()) errors.push("Property bedrooms is required");
+  if (!data.paymentFrequency?.trim())
+    errors.push("Property payment frequency is required");
+  if (!data.agentFee || isNaN(data.agentFee) || data.agentFee <= 0)
+    errors.push(
+      "Property agent fee is required and must be a non-negative number"
+    );
   if (!data.price || isNaN(data.price) || data.price <= 0) {
     errors.push("Valid price is required");
   }
@@ -66,6 +76,7 @@ const createProperty = async (req, res) => {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ error: "Authentication required" });
     }
+    // console.log(req.body);
 
     const validationErrors = validatePropertyData(req.body);
     if (validationErrors.length) {
@@ -76,8 +87,19 @@ const createProperty = async (req, res) => {
       });
     }
 
-    const { title, description, price, location, type, latitude, longitude } =
-      req.body;
+    const {
+      title,
+      description,
+      price,
+      location,
+      type,
+      latitude,
+      longitude,
+      bedrooms,
+      bathrooms,
+      agentFee,
+      paymentFrequency,
+    } = req.body;
     const userId = req.user.id;
 
     let imageIds = [];
@@ -143,6 +165,10 @@ const createProperty = async (req, res) => {
       latitude: latitude ? parseFloat(latitude) : undefined,
       longitude: longitude ? parseFloat(longitude) : undefined,
       status: "for_sale",
+      bedrooms,
+      bathrooms,
+      agentFee,
+      paymentFrequency,
     }).save();
 
     const populatedProperty = await newProperty.populate([
@@ -224,6 +250,110 @@ const getAllProperties = async (req, res) => {
           console.warn(
             `Property ${property._id} has ${missingUrlImages.length} images with missing URLs`
           );
+        }
+      }
+    });
+
+    const totalPages = Math.ceil(totalProperties / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        properties,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems: totalProperties,
+          itemsPerPage: limit,
+          hasNextPage,
+          hasPreviousPage,
+        },
+        links: {
+          self: `${req.baseUrl}?page=${page}&limit=${limit}`,
+          next: hasNextPage
+            ? `${req.baseUrl}?page=${page + 1}&limit=${limit}`
+            : null,
+          prev: hasPreviousPage
+            ? `${req.baseUrl}?page=${page - 1}&limit=${limit}`
+            : null,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching properties:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch properties.",
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
+const getAllActiveProperties = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+    const skip = (page - 1) * limit;
+
+    const filterQuery = {
+      isActive: true, // ✅ Only return active properties
+    };
+
+    // 🔍 Search
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, "i");
+      filterQuery.$or = [{ title: searchRegex }, { location: searchRegex }];
+    }
+
+    // ⛏️ Filters
+    if (req.query.type) filterQuery.type = req.query.type;
+    if (req.query.status) filterQuery.status = req.query.status;
+    if (req.query.minPrice)
+      filterQuery.price = { $gte: parseFloat(req.query.minPrice) };
+    if (req.query.maxPrice) {
+      filterQuery.price = {
+        ...filterQuery.price,
+        $lte: parseFloat(req.query.maxPrice),
+      };
+    }
+
+    const totalProperties = await Property.countDocuments(filterQuery);
+
+    // 🔄 Sort by priorityLevel first, then user-defined sort
+    const sortOptions = {
+      priorityLevel: -1, // ✅ Higher priorityLevel first
+      [sortBy]: sortOrder,
+    };
+
+    const properties = await Property.find(filterQuery)
+      .populate({
+        path: "comments",
+        populate: {
+          path: "user",
+          select: "profileImg fullname role",
+        },
+      })
+      .populate({
+        path: "images",
+        select: "url fileName",
+      })
+      .populate("user", "-salt -hash")
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // 🚨 Log missing images (optional)
+    properties.forEach((property) => {
+      if (property.images?.length) {
+        const missing = property.images.filter((img) => !img.url);
+        if (missing.length > 0) {
+          console.warn(`Property ${property._id} has images missing URLs`);
         }
       }
     });
@@ -527,6 +657,7 @@ const getPropertiesByUserId = async (req, res) => {
 module.exports = {
   createProperty,
   getAllProperties,
+  getAllActiveProperties,
   getPropertyById,
   updateProperty,
   deleteProperty,
