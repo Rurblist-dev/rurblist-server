@@ -24,17 +24,17 @@ const PORT = process.env.PORT || 8000;
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-const allowedOrigins = [
-  "https://www.rurblist.com", // your production frontend
-  "https://rurblist.com", // your production frontend
-  "http://localhost:3000", // optional: your dev environment
-];
 // Use the more robust cors middleware with configuration
 
 // origin: "http://localhost:3000",
 app.use(
   cors({
-    origin: function (origin, callback) {
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "http://localhost:3000", // optional: your dev environment
+        "https://rurblist.com", // your production frontend
+        "https://www.rurblist.com", // your production frontend
+      ];
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -42,6 +42,8 @@ app.use(
       }
     },
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: [
       "Content-Type",
