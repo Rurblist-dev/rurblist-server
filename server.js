@@ -25,22 +25,21 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 // Use the more robust cors middleware with configuration
-
-// origin: "http://localhost:3000",
+// origin: (origin, callback) => {
+//   const allowedOrigins = [
+//     "http://localhost:3000", // optional: your dev environment
+//     "https://rurblist.com", // your production frontend
+//     "https://www.rurblist.com", // your production frontend
+//   ];
+//   if (!origin || allowedOrigins.includes(origin)) {
+//     callback(null, true);
+//   } else {
+//     callback(new Error("Not allowed by CORS"));
+//   }
+// },
 app.use(
   cors({
-    origin: (origin, callback) => {
-      const allowedOrigins = [
-        "http://localhost:3000", // optional: your dev environment
-        "https://rurblist.com", // your production frontend
-        "https://www.rurblist.com", // your production frontend
-      ];
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: "https://www.rurblist.com",
     credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204,
