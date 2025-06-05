@@ -6,7 +6,7 @@ const router = express.Router();
 router.post("/initialize-payment", initializePayment);
 router.post(
   "/paystack-webhook",
-  express.json({ type: "*/*" }),
+  express.raw({ type: "application/json" }),
   paystackWebhook
 );
 

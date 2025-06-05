@@ -37,6 +37,7 @@ async function getUserEmailAndAdPackageAmount(
 
 const initializePayment = async (req, res) => {
   const { userId, propertyId } = req.body;
+
   // const { email, amount, propertyId, priorityDurationDays } = req.body;
   try {
     const { email, amount } = await getUserEmailAndAdPackageAmount(userId);

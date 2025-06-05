@@ -22,6 +22,8 @@ const paystackWebhook = async (req, res) => {
     const { metadata } = event.data;
     const { propertyId, priorityDurationDays } = metadata;
 
+    console.log(propertyId);
+
     // Update property priority level & expiration date
     const priorityBoostValue = 10; // Example: how much priority boosts per purchase
 

@@ -75,7 +75,7 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json({ limit: "10mb" }));
+// app.use(express.json({ limit: "10mb" }));
 
 // Backup CORS middleware for older browsers or special cases
 // res.setHeader("Access-Control-Allow-Origin", "https://www.rurblist.com");
@@ -113,6 +113,8 @@ app.use("/api/v1/ad-package", adPackageRoute);
 app.use("/api/v1/tour", tourRoute);
 app.use("/api/v1/payment", payment);
 app.use("/api/v1/comments", commentRoute);
+
+app.use(express.json());
 
 // Welcome route should be before the catch-all route
 app.get("/", (req, res) => {
