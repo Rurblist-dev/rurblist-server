@@ -253,12 +253,15 @@ const loginUser = async (req, res, next) => {
       await user.save();
 
       // Send as HTTP-only cookie
+      // secure: process.env.NODE_ENV === "production", // false in dev
+      // sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
       res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: true,
         sameSite: "strict",
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       });
+      // console.log(refreshToken);
 
       res.status(200).json({
         message: "Success",
@@ -385,6 +388,7 @@ async function refreshToken(req, res) {
   try {
     const token = req.cookies.refreshToken;
 
+    // console.log(token);
     if (!token)
       return res.status(401).json({ message: "No refresh token provided" });
 

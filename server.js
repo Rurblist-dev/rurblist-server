@@ -24,11 +24,13 @@ const PORT = process.env.PORT || 8000;
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+app.use(cookieParser());
 // Use the more robust cors middleware with configuration
+// origin: "https://www.rurblist.com",
 // origin: (origin, callback) => {
 //   const allowedOrigins = [
-//     "http://localhost:3000", // optional: your dev environment
 //     "https://rurblist.com", // your production frontend
+//     "http://localhost:3000", // optional: your dev environment
 //     "https://www.rurblist.com", // your production frontend
 //   ];
 //   if (!origin || allowedOrigins.includes(origin)) {
@@ -37,9 +39,25 @@ app.set("views", path.join(__dirname, "views"));
 //     callback(new Error("Not allowed by CORS"));
 //   }
 // },
+
+// origin:
+//   process.env.NODE_ENV === "development"
+//     ? "http://localhost:3000"
+//     : "https://www.rurblist.com",
 app.use(
   cors({
-    origin: "https://www.rurblist.com",
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        "https://rurblist.com", // your production frontend
+        "http://localhost:3000", // optional: your dev environment
+        "https://www.rurblist.com", // your production frontend
+      ];
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204,
@@ -53,17 +71,13 @@ app.use(
     ],
   })
 );
-app.use(cookieParser());
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: "10mb" }));
 
 // Backup CORS middleware for older browsers or special cases
 app.use((req, res, next) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    process.env.FRONTEND_URL || "http://localhost:3000"
-  );
+  res.setHeader("Access-Control-Allow-Origin", "https://www.rurblist.com");
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, OPTIONS"
