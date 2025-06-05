@@ -44,14 +44,16 @@ app.use(cookieParser());
 //   process.env.NODE_ENV === "development"
 //     ? "http://localhost:3000"
 //     : "https://www.rurblist.com",
+
+const allowedOrigins = [
+  "https://rurblist.com",
+  "http://localhost:3000",
+  "https://www.rurblist.com",
+  "https://website-v1-kappa.vercel.app",
+];
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = [
-        "https://rurblist.com", // your production frontend
-        "http://localhost:3000", // optional: your dev environment
-        "https://www.rurblist.com", // your production frontend
-      ];
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -76,8 +78,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: "10mb" }));
 
 // Backup CORS middleware for older browsers or special cases
+// res.setHeader("Access-Control-Allow-Origin", "https://www.rurblist.com");
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://www.rurblist.com");
+  if (allowedOrigins.includes(req.headers.origin)) {
+    res.setHeader("Access-Control-Allow-Origin", req.headers.origin);
+  }
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET, POST, PUT, DELETE, OPTIONS"
