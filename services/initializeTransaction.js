@@ -51,7 +51,7 @@ const initializePayment = async (req, res) => {
           propertyId: propertyId,
           priorityDurationDays: 10,
         },
-        callback_url: "https://rurblist.com/thank-you", // user redirects here after payment
+        callback_url: "https://www.rurblist.com/thank-you", // user redirects here after payment
       },
       {
         headers: {
