@@ -4,11 +4,7 @@ const { initializePayment } = require("../services/initializeTransaction");
 const router = express.Router();
 
 router.post("/initialize-payment", initializePayment);
-router.post(
-  "/paystack-webhook",
-  express.raw({ type: "application/json" }),
-  paystackWebhook
-);
+router.post("/paystack-webhook", paystackWebhook);
 
 module.exports = router;
 
