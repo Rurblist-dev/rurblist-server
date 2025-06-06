@@ -12,6 +12,7 @@ const verifyPaystackSignature = (req) => {
 };
 
 const paystackWebhook = async (req, res) => {
+  console.log("Received Paystack webhook event");
   if (!verifyPaystackSignature(req)) {
     return res.status(400).send("Invalid signature");
   }
