@@ -121,8 +121,6 @@ app.use("/api/v1/tour", tourRoute);
 app.use("/api/v1/payment", payment);
 app.use("/api/v1/comments", commentRoute);
 
-app.use(express.json());
-
 // Welcome route should be before the catch-all route
 app.get("/", (req, res) => {
   res.render("welcome");
