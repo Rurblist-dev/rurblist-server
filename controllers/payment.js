@@ -2,17 +2,17 @@ const crypto = require("crypto");
 const Property = require("../schemas/Property");
 // const Property = require("./models/property"); // your property model
 
-const verifyPaystackSignature = (req) => {
-  const hash = crypto
-    .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
-    .update(JSON.stringify(req.body))
-    .digest("hex");
-
-  return hash === req.headers["x-paystack-signature"];
-};
-
 const paystackWebhook = async (req, res) => {
   console.log("Received Paystack webhook event");
+  const verifyPaystackSignature = (req) => {
+    const hash = crypto
+      .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
+      .update(JSON.stringify(req.body))
+      .digest("hex");
+
+    return hash === req.headers["x-paystack-signature"];
+  };
+
   if (!verifyPaystackSignature(req)) {
     return res.status(400).send("Invalid signature");
   }

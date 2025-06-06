@@ -78,6 +78,10 @@ app.use(
 app.use(
   "/api/v1/payment-webhook",
   express.raw({ type: "application/json" }),
+  (req, res, next) => {
+    console.log("Webhook route called");
+    next();
+  },
   payment
 );
 
