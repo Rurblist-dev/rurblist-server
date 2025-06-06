@@ -16,7 +16,7 @@ const paystackWebhook = async (req, res) => {
     return res.status(400).send("Invalid signature");
   }
 
-  const event = req.body;
+  const event = JSON.parse(req.body);
 
   if (event.event === "charge.success") {
     const { metadata } = event.data;
