@@ -75,7 +75,7 @@ app.use(
 );
 
 // Parse Paystack webhook raw body FIRST (before global parsers)
-app.post(
+app.use(
   "/api/v1/payment-webhook",
   express.raw({ type: "application/json" }),
   payment
