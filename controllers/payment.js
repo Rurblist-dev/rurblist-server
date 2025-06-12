@@ -25,23 +25,26 @@ const Property = require("../schemas/Property");
 
 const paystackWebhook = async (req, res) => {
   console.log("Received Paystack webhook event");
-  const verifyPaystackSignature = (req) => {
-    const hash = crypto
-      .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
-      .update(JSON.stringify(req.body))
-      .digest("hex");
+  // const verifyPaystackSignature = (req) => {
+  const hash = crypto
+    .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
+    .update(req.body) // req.body is a Buffer from express.raw
+    .digest("hex");
 
-    return hash === req.headers["x-paystack-signature"];
-  };
+  const signature = req.headers["x-paystack-signature"];
+  // };
 
-  if (!verifyPaystackSignature(req)) {
-    console.log("Invalid signature received from Paystack");
-
+  if (hash !== signature) {
     return res.status(400).send("Invalid signature");
   }
 
+  // if (!verifyPaystackSignature(req)) {
+  //   console.log("Invalid signature received from Paystack");
+
+  //   return res.status(400).send("Invalid signature");
+  // }
+
   const event = JSON.parse(req.body);
-  console.log("Event received:", event);
 
   if (event.event === "charge.success") {
     const { metadata } = event.data;
