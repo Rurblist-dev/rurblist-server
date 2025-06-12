@@ -3,7 +3,7 @@ const Property = require("../schemas/Property");
 // const Property = require("./models/property"); // your property model
 
 const paystackWebhook = async (req, res) => {
-  // console.log("Received Paystack webhook event");
+  console.log("Received Paystack webhook event");
   const verifyPaystackSignature = (req) => {
     const hash = crypto
       .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
@@ -20,6 +20,7 @@ const paystackWebhook = async (req, res) => {
   }
 
   const event = JSON.parse(req.body);
+  console.log("Event received:", event);
 
   if (event.event === "charge.success") {
     const { metadata } = event.data;
