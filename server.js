@@ -75,19 +75,28 @@ app.use(
 );
 
 // Parse Paystack webhook raw body FIRST (before global parsers)
-app.use(
-  "/api/v1/payment-webhook",
-  express.raw({ type: "application/json" }),
-  (req, res, next) => {
-    console.log("Webhook route called here");
-    next();
-  },
-  payment
-);
+// app.use(
+//   "/api/v1/payment-webhook",
+//   express.raw({ type: "application/json" }),
+//   (req, res, next) => {
+//     console.log("Webhook route called here");
+//     next();
+//   },
+//   payment
+// );
 
 // express.json()(req, res, next);
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json({ limit: "10mb" }));
+// app.use(express.urlencoded({ extended: true }));
+// app.use(express.json({ limit: "10mb" }));
+// server.js or app.js
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/v1/payment/paystack-webhook") {
+    express.raw({ type: "application/json" })(req, res, next);
+  } else {
+    express.json({ limit: "10mb" })(req, res, next);
+    express.urlencoded({ extended: true })(req, res, next);
+  }
+});
 
 // Backup CORS middleware for older browsers or special cases
 // res.setHeader("Access-Control-Allow-Origin", "https://www.rurblist.com");
