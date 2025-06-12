@@ -3,6 +3,8 @@ const Property = require("../schemas/Property");
 // const Property = require("./models/property"); // your property model
 
 exports.paystackWebhook = (req, res) => {
+  console.log("Received Paystack webhook event:", req.body);
+
   const hash = crypto
     .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
     .update(req.body) // req.body is a Buffer from express.raw
