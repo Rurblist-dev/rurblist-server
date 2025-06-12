@@ -15,6 +15,7 @@ require("./jobs/decayPriorityLevels.js");
 require("dotenv").config();
 
 const cors = require("cors");
+const { paystackWebhook } = require("./controllers/payment.js");
 
 const app = express();
 
@@ -90,8 +91,8 @@ app.use(
 // app.use(express.json({ limit: "10mb" }));
 // server.js or app.js
 app.use((req, res, next) => {
-  if (req.originalUrl === "/api/v1/payment/paystack-webhook") {
-    express.raw({ type: "application/json" })(req, res, next);
+  if (req.originalUrl === "/api/v1/payment-webhook/paystack-webhook") {
+    express.raw({ type: "application/json" }), paystackWebhook;
   } else {
     express.json({ limit: "10mb" })(req, res, next);
     express.urlencoded({ extended: true })(req, res, next);
