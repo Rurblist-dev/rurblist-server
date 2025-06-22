@@ -7,6 +7,7 @@ const {
   forgotPassword,
   resetPassword,
   refreshToken,
+  logoutUser,
 } = require("../controllers/auth");
 
 // Remove the app.set lines - they're now in server.js
@@ -56,5 +57,8 @@ router.post("/reset-password/:token", resetPassword);
 
 // 🔄 Add the refresh token route
 router.post("/refresh", refreshToken);
+
+// Logout route
+router.post("/logout", logoutUser);
 
 module.exports = router;

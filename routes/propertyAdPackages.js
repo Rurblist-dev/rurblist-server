@@ -10,6 +10,9 @@ const {
 
 const router = express.Router();
 
+// Get all ad packages (Public - for selection)
+router.get("/", getAllAdPackages);
+
 // Create a new ad package (Admin only)
 router.post("/", verifyAdmin, addNewAdPackage);
 
@@ -18,8 +21,5 @@ router.put("/:id", verifyAdmin, updateAdPackage);
 
 // Delete an ad package (Admin only)
 router.delete("/:id", verifyAdmin, deleteAdPackage);
-
-// Get all ad packages (Public - for selection)
-router.get("/", getAllAdPackages);
 
 module.exports = router;

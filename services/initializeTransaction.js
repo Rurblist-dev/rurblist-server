@@ -5,7 +5,7 @@ const PropertyAdPackage = require("../schemas/PropertyAdPackages");
 
 async function getUserEmailAndAdPackageAmount(
   userId,
-  adPackageId = "683dc8167d5125d66577313d"
+  adPackageId // Function to fetch user email and ad package amount
 ) {
   // Fetch user by ID and select only the email field
   const user = await User.findById(userId).select("email");
@@ -13,13 +13,14 @@ async function getUserEmailAndAdPackageAmount(
 
   // Fetch ad package by ID and select only the price field
   const adPackage = await PropertyAdPackage.findById(adPackageId).select(
-    "price"
+    "price durationDays"
   );
   if (!adPackage) throw new Error("Ad package not found");
 
   return {
     email: user.email,
     amount: adPackage.price,
+    priorityDurationDays: adPackage.durationDays,
   };
 }
 
@@ -36,11 +37,13 @@ async function getUserEmailAndAdPackageAmount(
 // }
 
 const initializePayment = async (req, res) => {
-  const { userId, propertyId } = req.body;
+  const { userId, propertyId, adPackageId } = req.body;
 
   // const { email, amount, propertyId, priorityDurationDays } = req.body;
   try {
-    const { email, amount } = await getUserEmailAndAdPackageAmount(userId);
+    const { email, amount, priorityDurationDays } =
+      await getUserEmailAndAdPackageAmount(userId, adPackageId);
+    // console.log(email, amount, priorityDurationDays);
 
     const paystackResponse = await axios.post(
       "https://api.paystack.co/transaction/initialize",
@@ -49,7 +52,7 @@ const initializePayment = async (req, res) => {
         amount: amount * 100, // amount in kobo (Nigerian currency subunit)
         metadata: {
           propertyId: propertyId,
-          priorityDurationDays: 10,
+          priorityDurationDays: priorityDurationDays,
         },
         callback_url: "https://www.rurblist.com/thank-you", // user redirects here after payment
       },

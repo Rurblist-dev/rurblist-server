@@ -1,5 +1,6 @@
 const { genPassword } = require("../lib/passwordUtils");
 const { verifyToken } = require("../lib/verifyToken");
+const cloudinary = require("cloudinary").v2;
 const User = require("../schemas/User");
 
 // Getting all users here
@@ -49,8 +50,76 @@ const getUserID = (req, res) => {
 };
 
 // Update User
+// const updateUser = async (req, res, next) => {
+//   const { password, ...newUser } = req.body;
+
+//   // Filter out empty strings from newUser object
+//   const filteredUser = {};
+//   Object.keys(newUser).forEach((key) => {
+//     if (newUser[key] !== "") {
+//       filteredUser[key] = newUser[key];
+//     }
+//   });
+
+//   try {
+//     if (password) {
+//       const { salt, hash } = genPassword(password);
+
+//       const userCred = {
+//         salt,
+//         hash,
+//         ...filteredUser,
+//       };
+
+//       const updatedUser = await User.findByIdAndUpdate(
+//         req.params.userId,
+//         { $set: userCred },
+//         { new: true }
+//       );
+
+//       if (updatedUser) {
+//         res.status(200).json({
+//           message: "Successful",
+//           status: 200,
+//           detail: `User was updated successfully`,
+//         });
+//       } else {
+//         res.status(404).json({
+//           message: "User Not Found",
+//           status: 404,
+//           detail: `The User with the id ${req.params.userId} was not found`,
+//         });
+//       }
+//     } else {
+//       const updatedUser = await User.findByIdAndUpdate(
+//         req.params.userId,
+//         { $set: filteredUser },
+//         { new: true }
+//       );
+
+//       if (updatedUser) {
+//         res.status(200).json({
+//           message: "Successful",
+//           status: 200,
+//           detail: `User was updated successfully`,
+//         });
+//       } else {
+//         res.status(404).json({
+//           message: "User Not Found",
+//           status: 404,
+//           detail: `The User with the id ${req.params.userId} was not found`,
+//         });
+//       }
+//     }
+//   } catch (error) {
+//     // Handle the error properly, for example:
+//     next(error);
+//   }
+// };
+
 const updateUser = async (req, res, next) => {
-  const { password, ...newUser } = req.body;
+  const { password, profileImg, ninSlipImg, verificationStatus, ...newUser } =
+    req.body;
 
   // Filter out empty strings from newUser object
   const filteredUser = {};
@@ -61,6 +130,81 @@ const updateUser = async (req, res, next) => {
   });
 
   try {
+    // Handle profile image upload
+    // If using multer and receiving a file:
+
+    if (req.files && req.files.profileImg) {
+      const fileBuffer = req.files.profileImg[0].buffer;
+      // Use a Promise to handle the upload_stream callback
+      const uploadRes = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "users/profile_images" },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        stream.end(fileBuffer);
+      });
+
+      filteredUser.profileImg = uploadRes.secure_url;
+    }
+
+    if (req.files && req.files.ninSlipImg) {
+      const fileBuffer = req.files.ninSlipImg[0].buffer;
+      // Use a Promise to handle the upload_stream callback
+      const uploadRes = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "users/profile_images" },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        stream.end(fileBuffer);
+      });
+
+      filteredUser.ninSlipImg = uploadRes.secure_url;
+
+      if (uploadRes) {
+        filteredUser.verificationStatus = "pending";
+      }
+    }
+
+    // If receiving a base64 data URL:
+    if (profileImg && profileImg.startsWith("data:image/")) {
+      const uploadRes = await cloudinary.uploader.upload(profileImg, {
+        folder: "users/profile_images",
+      });
+      // use uploadRes.secure_url
+      filteredUser.profileImg = uploadRes.secure_url;
+    }
+
+    // Handle NIN slip image upload
+    // if (ninSlipImg && ninSlipImg.startsWith("data:")) {
+    //   const uploadRes = await cloudinary.uploader.upload(ninSlipImg, {
+    //     folder: "users/nin_slips",
+    //   });
+    //   filteredUser.ninSlipImg = uploadRes.secure_url;
+    // }
+    // Before using .startsWith, check if it's a string
+    if (typeof ninSlipImg === "string" && ninSlipImg.startsWith("http")) {
+      // If ninSlipImg is already a URL, just assign it
+      filteredUser.ninSlipImg = ninSlipImg;
+    } else if (
+      ninSlipImg &&
+      typeof ninSlipImg === "object" &&
+      ninSlipImg.path
+    ) {
+      // If ninSlipImg is a file object (e.g., from multer), upload to Cloudinary
+      const uploadRes = await cloudinary.uploader.upload(ninSlipImg.path, {
+        folder: "users/nin_slips",
+      });
+      filteredUser.ninSlipImg = uploadRes.secure_url;
+
+      console.log("Uploaded NIN slip image:", uploadRes.secure_url);
+    }
+
     if (password) {
       const { salt, hash } = genPassword(password);
 
@@ -98,6 +242,7 @@ const updateUser = async (req, res, next) => {
 
       if (updatedUser) {
         res.status(200).json({
+          success: true,
           message: "Successful",
           status: 200,
           detail: `User was updated successfully`,
@@ -111,8 +256,11 @@ const updateUser = async (req, res, next) => {
       }
     }
   } catch (error) {
-    // Handle the error properly, for example:
-    next(error);
+    // next(error);
+    console.log("Error updating user:", error);
+    return res
+      .status(500)
+      .json({ error: "Internal Server Error", detail: error.message });
   }
 };
 

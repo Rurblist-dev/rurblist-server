@@ -24,7 +24,7 @@ const Property = require("../schemas/Property");
 // };
 
 const paystackWebhook = async (req, res) => {
-  console.log("Received Paystack webhook event");
+  // console.log("Received Paystack webhook event");
   // const verifyPaystackSignature = (req) => {
   const hash = crypto
     .createHmac("sha512", process.env.PAYSTACK_SECRET_KEY)
@@ -50,17 +50,36 @@ const paystackWebhook = async (req, res) => {
     const { metadata } = event.data;
     const { propertyId, priorityDurationDays } = metadata;
 
-    console.log(propertyId);
+    // console.log(propertyId);
 
     // Update property priority level & expiration date
-    const priorityBoostValue = 10; // Example: how much priority boosts per purchase
+    const priorityBoostValue = priorityDurationDays; // Example: how much priority boosts per purchase
 
     try {
+      // Fetch the property to get the current priorityExpiresAt
+      const property = await Property.findById(propertyId);
+
+      let newPriorityExpiresAt;
+      const now = Date.now();
+      const durationMs = priorityDurationDays * 24 * 60 * 60 * 1000;
+
+      if (
+        property &&
+        property.priorityExpiresAt &&
+        property.priorityExpiresAt > now
+      ) {
+        // If not expired, add to the existing expiration
+        newPriorityExpiresAt = new Date(
+          property.priorityExpiresAt.getTime() + durationMs
+        );
+      } else {
+        // If expired or not set, start from now
+        newPriorityExpiresAt = new Date(now + durationMs);
+      }
+
       await Property.findByIdAndUpdate(propertyId, {
         $inc: { priorityLevel: priorityBoostValue },
-        priorityExpiresAt: new Date(
-          Date.now() + priorityDurationDays * 24 * 60 * 60 * 1000
-        ),
+        priorityExpiresAt: newPriorityExpiresAt,
         isActive: true,
       });
 

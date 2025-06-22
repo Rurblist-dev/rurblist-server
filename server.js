@@ -26,25 +26,6 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
 app.use(cookieParser());
-// Use the more robust cors middleware with configuration
-// origin: "https://www.rurblist.com",
-// origin: (origin, callback) => {
-//   const allowedOrigins = [
-//     "https://rurblist.com", // your production frontend
-//     "http://localhost:3000", // optional: your dev environment
-//     "https://www.rurblist.com", // your production frontend
-//   ];
-//   if (!origin || allowedOrigins.includes(origin)) {
-//     callback(null, true);
-//   } else {
-//     callback(new Error("Not allowed by CORS"));
-//   }
-// },
-
-// origin:
-//   process.env.NODE_ENV === "development"
-//     ? "http://localhost:3000"
-//     : "https://www.rurblist.com",
 
 const allowedOrigins = [
   "https://rurblist.com",
@@ -79,28 +60,13 @@ app.use(
 app.use(
   "/api/v1/payment-webhook",
   express.raw({ type: "application/json" }),
-  (req, res, next) => {
-    console.log("Webhook route called here");
-    next();
-  },
   paystackWebhook
 );
 
 // express.json()(req, res, next);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json({ limit: "10mb" }));
-// // server.js or app.js
-// app.use((req, res, next) => {
-//   if (req.originalUrl === "/api/v1/payment-webhook/paystack-webhook") {
-//     express.raw({ type: "application/json" }), paystackWebhook;
-//   } else {
-//     express.json({ limit: "10mb" })(req, res, next);
-//     express.urlencoded({ extended: true })(req, res, next);
-//   }
-// });
 
-// Backup CORS middleware for older browsers or special cases
-// res.setHeader("Access-Control-Allow-Origin", "https://www.rurblist.com");
 app.use((req, res, next) => {
   if (allowedOrigins.includes(req.headers.origin)) {
     res.setHeader("Access-Control-Allow-Origin", req.headers.origin);

@@ -218,10 +218,9 @@ const loginUser = async (req, res, next) => {
   const { identifier, password } = req.body; // Use 'identifier' for both email and username
 
   // Allow login with either email or username
-  const query = { username: identifier };
-  //  identifier.includes("@")
-  //   ? { email: identifier }
-  //   : { username: identifier };
+  const query =
+    // { username: identifier };
+    identifier.includes("@") ? { email: identifier } : { username: identifier };
 
   try {
     const user = await User.findOne(query);
@@ -242,7 +241,7 @@ const loginUser = async (req, res, next) => {
       const accessToken = jwt.sign(
         { id: user._id.toString(), isAdmin: user.isAdmin, email: user.email },
         process.env.JWT_SECRET,
-        { expiresIn: "15m" }
+        { expiresIn: "30m" }
       );
       // Generate a refresh token (random string or JWT)
       const refreshToken = crypto.randomBytes(64).toString("hex");
