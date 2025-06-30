@@ -9,6 +9,7 @@ const adPackageRoute = require("./routes/propertyAdPackages");
 const payment = require("./routes/payment");
 const tourRoute = require("./routes/tour");
 const commentRoute = require("./routes/comment");
+const kycRoute = require("./routes/kyc");
 
 require("./jobs/decayPriorityLevels.js");
 
@@ -101,6 +102,7 @@ app.use("/api/v1/ad-package", adPackageRoute);
 app.use("/api/v1/tour", tourRoute);
 app.use("/api/v1/payment", payment);
 app.use("/api/v1/comments", commentRoute);
+app.use("/api/v1/kyc", kycRoute);
 
 // Welcome route should be before the catch-all route
 app.get("/", (req, res) => {
