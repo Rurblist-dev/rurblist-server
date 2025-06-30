@@ -6,7 +6,7 @@ const upload = multer({
   storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 10, // Maximum 10 files
+    files: 25, // Maximum 10 files
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith("image/")) {
@@ -18,7 +18,7 @@ const upload = multer({
 }).fields([
   { name: "profileImg", maxCount: 1 },
   { name: "ninSlipImg", maxCount: 1 },
-  { name: "images", maxCount: 10 }, // keep this if you want to allow "images" field too
+  { name: "images", maxCount: 25 }, // keep this if you want to allow "images" field too
 ]);
 
 // Middleware to handle file upload

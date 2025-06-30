@@ -93,20 +93,22 @@ const createProperty = async (req, res) => {
       price,
       location,
       type,
+      status,
       latitude,
       longitude,
       bedrooms,
       bathrooms,
       agentFee,
       paymentFrequency,
+      amenities,
     } = req.body;
     const userId = req.user.id;
 
     let imageIds = [];
-    if (req.files?.length > 0) {
+    if (req.files?.images.length > 0) {
       try {
         imageIds = await Promise.all(
-          req.files.map((file) => {
+          req.files.images.map((file) => {
             return new Promise((resolve, reject) => {
               const uploadStream = cloudinary.uploader.upload_stream(
                 {
@@ -154,21 +156,32 @@ const createProperty = async (req, res) => {
       }
     }
 
+    // Convert amenities string to array
+    let amenitiesArray = [];
+    if (amenities && typeof amenities === "string") {
+      // Split by "|" and trim whitespace
+      amenitiesArray = amenities
+        .split("|")
+        .map((item) => item.trim())
+        .filter((item) => item !== ""); // Remove empty items
+    }
+
     const newProperty = await new Property({
-      title,
+      title: title.toLowerCase(),
       description,
       price: parseFloat(price),
       location,
-      type,
+      type: type.toLowerCase(),
       images: imageIds,
       user: userId,
       latitude: latitude ? parseFloat(latitude) : undefined,
       longitude: longitude ? parseFloat(longitude) : undefined,
-      status: "for_sale",
+      status,
       bedrooms,
       bathrooms,
       agentFee,
-      paymentFrequency,
+      paymentFrequency: paymentFrequency.toLowerCase(),
+      amenities: amenitiesArray.map((a) => a.toLowerCase()),
     }).save();
 
     const populatedProperty = await newProperty.populate([

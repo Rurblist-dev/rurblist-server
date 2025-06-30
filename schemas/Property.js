@@ -57,6 +57,10 @@ const propertySchema = new mongoose.Schema(
       // default: "for_sale",
       index: true,
     },
+    amenities: {
+      type: [String],
+      default: [],
+    },
     type: {
       type: String,
       enum: [
@@ -87,6 +91,7 @@ const propertySchema = new mongoose.Schema(
     },
     isActive: {
       type: Boolean,
+      default: true,
     },
     priorityLevel: {
       type: Number,

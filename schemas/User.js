@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema(
     ninSlipImg: { type: String },
     cacSlipImg: { type: String },
     userID: { type: String, unique: true, require: true }, // Unique identifier for the user, e.g., NIN or Cac number
-    ninNumber: { type: String, unique: true }, // National Identification Number
+    // National Identification Number
     firstName: {
       type: String,
     },
@@ -44,8 +44,13 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      default: "home_seeker", // home_seeker || agent || landlord
+      // home_seeker || agent || landlord
     },
+    rating: {
+      type: Object,
+      default: {},
+    },
+
     savedProperties: [
       {
         type: mongoose.Schema.Types.ObjectId,
