@@ -11,6 +11,7 @@ const adPackageRoute = require("./routes/propertyAdPackages");
 const payment = require("./routes/payment");
 const tourRoute = require("./routes/tour");
 const commentRoute = require("./routes/comment");
+const kycRoute = require("./routes/kyc");
 const reviewRoute = require("./routes/reviews");
 
 require("./jobs/decayPriorityLevels.js");
@@ -170,6 +171,7 @@ app.get("/api/v1/messages/:roomId", async (req, res) => {
   const messages = await Message.find({ roomId }).sort({ timestamp: 1 }).lean();
   res.json({ success: true, messages });
 });
+app.use("/api/v1/kyc", kycRoute);
 
 // Welcome route should be before the catch-all route
 app.get("/", (req, res) => {

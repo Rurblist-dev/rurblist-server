@@ -12,10 +12,10 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
     profileImg: { type: String },
-    ninSlipImg: { type: String },
-    cacSlipImg: { type: String },
-    userID: { type: String, unique: true, require: true }, // Unique identifier for the user, e.g., NIN or Cac number
-    // National Identification Number
+    // ninSlipImg: { type: String },
+    // cacSlipImg: { type: String },
+    // userID: { type: String, unique: true, require: true }, // Unique identifier for the user, e.g., NIN or Cac number
+    // ninNumber: { type: String, unique: true }, // National Identification Number
     firstName: {
       type: String,
     },
@@ -79,6 +79,10 @@ const userSchema = new mongoose.Schema(
     tokenExpiration: {
       type: Date, // This will store the expiration time for the reset token
       required: false, // Not required initially
+    },
+    isKycVerified: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }
