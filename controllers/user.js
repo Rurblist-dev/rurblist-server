@@ -202,8 +202,10 @@ const updateUser = async (req, res, next) => {
       });
       filteredUser.ninSlipImg = uploadRes.secure_url;
 
-      console.log("Uploaded NIN slip image:", uploadRes.secure_url);
+      // console.log("Uploaded NIN slip image:", uploadRes.secure_url);
     }
+
+    console.log(filteredUser);
 
     if (password) {
       const { salt, hash } = genPassword(password);
@@ -257,7 +259,7 @@ const updateUser = async (req, res, next) => {
     }
   } catch (error) {
     // next(error);
-    console.log("Error updating user:", error);
+    // console.log("Error updating user:", error);
     return res
       .status(500)
       .json({ error: "Internal Server Error", detail: error.message });

@@ -48,7 +48,7 @@ const paystackWebhook = async (req, res) => {
 
   if (event.event === "charge.success") {
     const { metadata } = event.data;
-    const { propertyId, priorityDurationDays } = metadata;
+    const { propertyId, priorityDurationDays, paymentType } = metadata;
 
     // console.log(propertyId);
 

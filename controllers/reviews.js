@@ -23,7 +23,7 @@ exports.createReview = async (req, res) => {
     const review = new Review(req.body);
     await review.save();
 
-    console.log("Review created:", Object.entries(user.rating).length);
+    // console.log("Review created:", Object.entries(user.rating).length);
     if (Object.entries(user.rating).length > 0) {
       //update the review count and rating of the realtor
       const rateValue = req.body.rating;

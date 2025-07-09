@@ -9,7 +9,17 @@ const {
 
 exports.uploadKyc = async (req, res) => {
   try {
-    const { ninNumber, cacNumber, dob, address, city, nationality } = req.body;
+    const userDetails = await User.findById(req.user.id);
+    const {
+      firstName,
+      lastName,
+      ninNumber,
+      cacNumber,
+      dob,
+      address,
+      city,
+      nationality,
+    } = req.body;
     const files = req.files;
 
     if (!req.user || !req.user.id) {
@@ -122,7 +132,18 @@ exports.uploadKyc = async (req, res) => {
       buffer: files.cacSlipImg[0].buffer,
       mimetype: files.cacSlipImg[0].mimetype,
     });
+    if (selfieImg) {
+      userDetails.profileImg = selfieImg;
+    }
+    if (ninSlipImg && ninNumber) {
+      userDetails.verificationStatus = "pending";
+    }
+    if (firstName && lastName) {
+      userDetails.firstName = firstName;
+      userDetails.lastName = lastName;
+    }
 
+    await userDetails.save();
     const kyc = await Kyc.create({
       dob: dobDate,
       address,

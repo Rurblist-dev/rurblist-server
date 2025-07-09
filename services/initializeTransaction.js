@@ -37,7 +37,7 @@ async function getUserEmailAndAdPackageAmount(
 // }
 
 const initializePayment = async (req, res) => {
-  const { userId, propertyId, adPackageId } = req.body;
+  const { userId, propertyId, adPackageId, paymentType } = req.body;
 
   // const { email, amount, propertyId, priorityDurationDays } = req.body;
   try {
@@ -51,6 +51,7 @@ const initializePayment = async (req, res) => {
         email: email,
         amount: amount * 100, // amount in kobo (Nigerian currency subunit)
         metadata: {
+          paymentType,
           propertyId: propertyId,
           priorityDurationDays: priorityDurationDays,
         },
