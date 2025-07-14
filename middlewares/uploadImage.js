@@ -19,7 +19,6 @@ const upload = multer({
   { name: "profileImg", maxCount: 1 },
   { name: "ninSlipImg", maxCount: 1 },
   { name: "cacSlipImg", maxCount: 1 },
-  { name: "selfieImg", maxCount: 1 },
   { name: "images", maxCount: 25 }, // keep this if you want to allow "images" field too
 ]);
 

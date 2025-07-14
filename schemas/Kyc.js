@@ -8,7 +8,7 @@ const KycSchema = new mongoose.Schema(
     nationality: { type: String, required: true },
     ninNumber: { type: String, unique: true },
     ninSlipImg: { type: String },
-    cacNumber: { type: String, unique: true },
+    cacNumber: { type: String },
     cacSlipImg: { type: String },
     selfieImg: { type: String },
     verificationStatus: {

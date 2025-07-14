@@ -7,7 +7,7 @@ exports.createTour = async (req, res) => {
       datetime,
       email,
       phone,
-      fullname,
+      username,
       homeSeeker,
       agent,
       tourType,
@@ -18,7 +18,7 @@ exports.createTour = async (req, res) => {
       !datetime ||
       !email ||
       !phone ||
-      !fullname ||
+      !username ||
       !homeSeeker ||
       !agent ||
       !tourType ||
@@ -51,7 +51,7 @@ exports.createTour = async (req, res) => {
       datetime,
       email,
       phone,
-      fullname,
+      username,
       homeSeeker,
       agent,
       tourType,
@@ -97,8 +97,14 @@ exports.getTourByUserId = async (req, res) => {
   try {
     // const tours = await Tour.find({ sentToUser: id });
     const populatedTours = await Tour.find({ homeSeeker: id })
-      .populate("homeSeeker", "fullname email profileImg phoneNumber")
-      .populate("agent", "fullname email profileImg phoneNumber")
+      .populate(
+        "homeSeeker",
+        "fullname firstName lastName email profileImg phoneNumber"
+      )
+      .populate(
+        "agent",
+        "fullname firstName lastName email profileImg phoneNumber"
+      )
       .populate("property", "title description _id location");
 
     if (!populatedTours.length) {

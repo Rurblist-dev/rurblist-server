@@ -14,7 +14,7 @@ exports.uploadKyc = async (req, res) => {
       firstName,
       lastName,
       ninNumber,
-      cacNumber,
+      cacNumber, // optional
       dob,
       address,
       city,
@@ -25,11 +25,10 @@ exports.uploadKyc = async (req, res) => {
     if (!req.user || !req.user.id) {
       return res.status(401).json({ error: "Authentication required" });
     }
-    if (!ninNumber || !cacNumber || !dob || !address || !city || !nationality) {
+    if (!ninNumber || !dob || !address || !city || !nationality) {
       return res.status(400).json({
         success: false,
-        error:
-          "ninNumber, cacNumber, dob, address, city, nationality are required.",
+        error: "ninNumber, dob, address, city, nationality are required.",
       });
     }
     if (!files?.ninSlipImg?.[0]) {
@@ -38,12 +37,7 @@ exports.uploadKyc = async (req, res) => {
         error: "NIN slip image is required.",
       });
     }
-    if (!files?.cacSlipImg?.[0]) {
-      return res.status(400).json({
-        success: false,
-        error: "CAC slip image is required.",
-      });
-    }
+    // CAC slip image and CAC number are optional, so no validation required
     if (!files?.selfieImg?.[0]) {
       return res.status(400).json({
         success: false,
@@ -58,13 +52,6 @@ exports.uploadKyc = async (req, res) => {
         error: "NIN must be an 11-digit number.",
       });
     }
-    // // Validate CAC format
-    // if (!/^[A-Z0-9]{10}$/.test(cacNumber)) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     error: "CAC number must be a 10-character alphanumeric string.",
-    //   });
-    // }
     // Validate date of birth format
     const dobDate = new Date(dob);
     if (isNaN(dobDate.getTime())) {
@@ -81,29 +68,6 @@ exports.uploadKyc = async (req, res) => {
         error: "User not found.",
       });
     }
-
-    // Validate NIN
-    // const ninVerificationResult = await verifyVNIN({
-    //   vnin: ninNumber.replace(/-/g, ""), // Remove hyphens if any
-    //   firstname: user.firstName,
-    //   lastname: user.lastName,
-    //   phone: user.phone,
-    // });
-    // console.log("NIN Verification Result:", ninVerificationResult);
-    // if (!ninVerificationResult.success) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     error: `NIN verification failed: ${
-    //       ninVerificationResult.error || "Unknown error"
-    //     }`,
-    //   });
-    // }
-    // if (!ninVerificationResult.data || !ninVerificationResult.data.isValid) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     error: "NIN verification failed. Please check your NIN details.",
-    //   });
-    // }
 
     const kycExists = await Kyc.findOne({ user: req.user.id });
     if (kycExists) {
@@ -127,11 +91,19 @@ exports.uploadKyc = async (req, res) => {
       buffer: files.ninSlipImg[0].buffer,
       mimetype: files.ninSlipImg[0].mimetype,
     });
-    const { secureUrl: cacSlipImg } = await uploadPictureFile({
-      fileName: `kyc-selfie/${Date.now()}-${files.cacSlipImg[0].originalname}`,
-      buffer: files.cacSlipImg[0].buffer,
-      mimetype: files.cacSlipImg[0].mimetype,
-    });
+
+    let cacSlipImg;
+    if (files?.cacSlipImg?.[0]) {
+      const { secureUrl: cacSlipImgUrl } = await uploadPictureFile({
+        fileName: `kyc-selfie/${Date.now()}-${
+          files.cacSlipImg[0].originalname
+        }`,
+        buffer: files.cacSlipImg[0].buffer,
+        mimetype: files.cacSlipImg[0].mimetype,
+      });
+      cacSlipImg = cacSlipImgUrl;
+    }
+
     if (selfieImg) {
       userDetails.profileImg = selfieImg;
     }
@@ -151,8 +123,8 @@ exports.uploadKyc = async (req, res) => {
       nationality,
       ninNumber,
       ninSlipImg,
-      cacNumber,
-      cacSlipImg,
+      cacNumber: cacNumber || undefined, // optional
+      cacSlipImg: cacSlipImg || undefined, // optional
       selfieImg,
       user: req.user.id,
     });

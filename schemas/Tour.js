@@ -27,7 +27,7 @@ const tourSchema = new mongoose.Schema({
         `${props.value} is not a valid phone number! Format: +123-456-789-000 or similar`,
     },
   },
-  fullname: {
+  username: {
     type: String,
     required: true, // Ensure this field is mandatory; adjust as needed
   },
@@ -50,6 +50,11 @@ const tourSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    immutable: true,
   },
 });
 

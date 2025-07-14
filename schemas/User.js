@@ -44,6 +44,8 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
+      default: "home_seeker",
+      enum: ["home_seeker", "agent", "landlord", "admin"], //
       // home_seeker || agent || landlord
     },
     rating: {

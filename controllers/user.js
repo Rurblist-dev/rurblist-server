@@ -205,7 +205,7 @@ const updateUser = async (req, res, next) => {
       // console.log("Uploaded NIN slip image:", uploadRes.secure_url);
     }
 
-    console.log(filteredUser);
+    // console.log(filteredUser);
 
     if (password) {
       const { salt, hash } = genPassword(password);
