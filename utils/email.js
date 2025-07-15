@@ -2,22 +2,24 @@ const nodemailer = require("nodemailer");
 
 require("dotenv").config();
 
-// Create a Nodemailer transporter
 const transporter = nodemailer.createTransport({
-  service: "gmail", // Replace with your email service
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  // service: "gmail",
+  // host: "smtp.gmail.com",
+  // port: 465,
+  // secure: true,
+  host: "smtp.zeptomail.com",
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USERNAME, // Your email username
-    pass: process.env.EMAIL_PASSWORD, // Your email password
+    user: process.env.EMAIL_USERNAME, 
+    pass: process.env.EMAIL_PASSWORD, 
   },
 });
 
 sendEmail = async (to, subject, text, html) => {
   try {
     const mailOptions = {
-      from: process.env.EMAIL_USERNAME,
+      from: `"Rurblist" ${process.env.EMAIL}`,
       to,
       subject,
       text,

@@ -9,7 +9,7 @@ const { sendEmail } = require("./email");
  * @returns {Promise<void>}
  */
 const sendKycApprovedEmail = async (email, firstName, lastName) => {
-  const rurblistEmail = process.env.EMAIL_USERNAME;
+  const rurblistEmail = process.env.EMAIL;
   const currentYear = new Date().getFullYear();
 
   const subject = "✅ Your KYC Verification Has Been Approved!";
@@ -122,7 +122,7 @@ const sendKycRejectedEmail = async (
   lastName,
   reason = ""
 ) => {
-  const rurblistEmail = process.env.EMAIL_USERNAME;
+  const rurblistEmail = process.env.EMAIL;
   const currentYear = new Date().getFullYear();
 
   const subject = "⚠️ Action Required – Your KYC Submission Was Rejected";
