@@ -30,7 +30,7 @@ exports.uploadKyc = async (req, res) => {
         success: false,
         error: "ninNumber, dob, address, city, nationality are required.",
       });
-    }
+    } //
     if (!files?.ninSlipImg?.[0]) {
       return res.status(400).json({
         success: false,
