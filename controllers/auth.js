@@ -179,7 +179,8 @@ require("dotenv").config();
 // };
 
 const registerUser = async (req, res, next) => {
-  const { password, email, firstName, lastName, ...otherDetails } = req.body;
+  const { password, email, firstName, lastName, role, ...otherDetails } =
+    req.body;
 
   try {
     // Generate salt and hash for the password
@@ -215,72 +216,155 @@ const registerUser = async (req, res, next) => {
   }
 };
 
-const loginUser = async (req, res, next) => {
-  const { identifier, password } = req.body; // Use 'identifier' for both email and username
+// const loginUser = async (req, res, next) => {
+//   const { identifier, password } = req.body; // Use 'identifier' for both email and username
 
-  // Allow login with either email or username
-  const query =
-    // { username: identifier };
-    identifier.includes("@") ? { email: identifier } : { username: identifier };
+//   // Allow login with either email or username
+//   const query =
+//     // { username: identifier };
+//     identifier.includes("@") ? { email: identifier } : { username: identifier };
+
+//   try {
+//     const user = await User.findOne(query);
+
+//     // Check if user exists
+//     if (!user) {
+//       return res.status(401).json({
+//         message: "Failed",
+//         status: 401,
+//         details: "Invalid Credentials - User not found",
+//       });
+//     }
+
+//     // Compare passwords match
+//     const isValid = validatePass(password, user.hash, user.salt);
+
+//     if (isValid) {
+//       const accessToken = jwt.sign(
+//         { id: user._id.toString(), isAdmin: user.isAdmin, email: user.email },
+//         process.env.JWT_SECRET,
+//         { expiresIn: "30m" }
+//       );
+//       // Generate a refresh token (random string or JWT)
+//       const refreshToken = crypto.randomBytes(40).toString("hex");
+
+//       const accessTokenExp = Date.now() + 30 * 60 * 1000;
+//       // Store in DB
+//       user.refreshToken = refreshToken;
+//       user.tokenExpiration = accessTokenExp;
+//       // user.refreshToken = newRefreshToken;
+//       // user.tokenExpiration = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+//       await user.save();
+
+//       // Send as HTTP-only cookie
+//       // secure: process.env.NODE_ENV === "production", // false in dev
+//       // sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+//       res.cookie("refreshToken", refreshToken, {
+//         httpOnly: true,
+//         secure: true,
+//         sameSite: "None",
+//         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+//       });
+//       // console.log(refreshToken);
+
+//       res.status(200).json({
+//         message: "Success",
+//         status: 200,
+//         details: "User successfully logged in 😇",
+//         accessToken,
+//         userId: user._id,
+//         tokenExpiration: accessTokenExp,
+//       });
+//     } else {
+//       // Return an error for invalid password
+//       res.status(401).json({
+//         message: "Failed",
+//         status: 401,
+//         details: "Invalid Credentials - Wrong password",
+//       });
+//     }
+//   } catch (err) {
+//     next(err);
+//   }
+// };
+
+const loginUser = async (req, res, next) => {
+  const { identifier, password } = req.body;
 
   try {
-    const user = await User.findOne(query);
+    // Find user by email or username
+    const user = await User.findOne(
+      identifier.includes("@")
+        ? { email: identifier }
+        : { username: identifier }
+    );
 
-    // Check if user exists
     if (!user) {
       return res.status(401).json({
-        message: "Failed",
-        status: 401,
-        details: "Invalid Credentials - User not found",
+        success: false,
+        message: "Invalid credentials",
       });
     }
 
-    // Compare passwords match
-    const isValid = validatePass(password, user.hash, user.salt);
+    // Verify password
+    const isValid = require("../lib/passwordUtils").validatePass(
+      password,
+      user.hash,
+      user.salt
+    );
 
-    if (isValid) {
-      const accessToken = jwt.sign(
-        { id: user._id.toString(), isAdmin: user.isAdmin, email: user.email },
-        process.env.JWT_SECRET,
-        { expiresIn: "30m" }
-      );
-      // Generate a refresh token (random string or JWT)
-      const refreshToken = crypto.randomBytes(64).toString("hex");
-
-      // Store in DB
-      user.refreshToken = refreshToken;
-      user.tokenExpiration = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
-      await user.save();
-
-      // Send as HTTP-only cookie
-      // secure: process.env.NODE_ENV === "production", // false in dev
-      // sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-      res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      });
-      // console.log(refreshToken);
-
-      res.status(200).json({
-        message: "Success",
-        status: 200,
-        details: "User successfully logged in 😇",
-        accessToken,
-        userId: user._id,
-        tokenExpiration: Date.now() + 7 * 24 * 60 * 60 * 1000,
-      });
-    } else {
-      // Return an error for invalid password
-      res.status(401).json({
-        message: "Failed",
-        status: 401,
-        details: "Invalid Credentials - Wrong password",
+    if (!isValid) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
       });
     }
-  } catch (err) {
-    next(err);
+
+    // Generate tokens
+    const accessToken = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "30m" }
+    );
+
+    const refreshToken = crypto.randomBytes(40).toString("hex");
+    const tokenExpiration = Date.now() + 30 * 60 * 1000; // 30 minutes
+
+    // Update user with refresh token
+    user.refreshToken = refreshToken;
+    user.tokenExpiration = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+    await user.save();
+
+    // Set HTTP-only cookie for refresh token
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Send response
+    res.status(200).json({
+      success: true,
+      message: "Success",
+      accessToken,
+      tokenExpiration,
+      userId: user._id,
+      details: "User successfully logged in 😇",
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -403,10 +487,13 @@ async function refreshToken(req, res) {
     const newAccessToken = jwt.sign(
       { id: user._id, email: user.email, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "1h" }
     );
 
-    res.status(200).json({ accessToken: newAccessToken });
+    res.status(200).json({
+      accessToken: newAccessToken,
+      tokenExpiration: user.tokenExpiration,
+    });
   } catch (err) {
     console.error("Refresh token error:", err);
     res.status(500).json({ message: "Internal server error" });
