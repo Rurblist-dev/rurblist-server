@@ -19,7 +19,10 @@ const upload = multer({
   { name: "profileImg", maxCount: 1 },
   { name: "ninSlipImg", maxCount: 1 },
   { name: "cacSlipImg", maxCount: 1 },
-  { name: "images", maxCount: 25 }, // keep this if you want to allow "images" field too
+  { name: "images", maxCount: 25 },
+  { name: "ownershipDocument", maxCount: 1 },
+  { name: "govtApproval", maxCount: 1 },
+  { name: "utilityBill", maxCount: 1 },
 ]);
 
 // Middleware to handle file upload

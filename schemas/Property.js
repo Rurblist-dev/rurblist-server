@@ -93,6 +93,10 @@ const propertySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    ownershipDocument: { type: String },
+    govtApproval: { type: String },
+    utilityBill: { type: String },
+    propertyIdNumber: { type: String, unique: true },
     priorityLevel: {
       type: Number,
       default: 0,

@@ -101,6 +101,7 @@ const createProperty = async (req, res) => {
       agentFee,
       paymentFrequency,
       amenities,
+      propertyIdNumber,
     } = req.body;
     const userId = req.user.id;
 
@@ -156,6 +157,110 @@ const createProperty = async (req, res) => {
       }
     }
 
+    // Upload ownershipDocument
+    if (req.files?.ownershipDocument?.length > 0) {
+      let ownershipDocumentUrl;
+      try {
+        const ownershipDocumentFile = req.files.ownershipDocument[0];
+        const uploadResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              resource_type: "auto", // Allows uploading images or PDFs
+              folder: "properties/documents",
+            },
+            (error, result) => {
+              if (error) {
+                console.error(
+                  "Cloudinary ownershipDocument upload error:",
+                  error
+                );
+                return reject(error);
+              }
+              resolve(result);
+            }
+          );
+
+          // Write file buffer to the upload stream
+          uploadStream.end(ownershipDocumentFile.buffer);
+        });
+
+        ownershipDocumentUrl = uploadResult.secure_url;
+      } catch (error) {
+        console.error("Failed to upload ownershipDocument:", error);
+        return res.status(500).json({
+          success: false,
+          error: "Failed to upload ownership document",
+          details: error.message,
+        });
+      }
+    }
+    if (req.files?.govtApproval?.length > 0) {
+      let govtApprovalUrl;
+      try {
+        const govtApprovalFile = req.files.govtApproval[0];
+        const uploadResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              resource_type: "auto", // Allows uploading images or PDFs
+              folder: "properties/documents",
+            },
+            (error, result) => {
+              if (error) {
+                console.error("Cloudinary govtApproval upload error:", error);
+                return reject(error);
+              }
+              resolve(result);
+            }
+          );
+
+          // Write file buffer to the upload stream
+          uploadStream.end(govtApprovalFile.buffer);
+        });
+
+        govtApprovalUrl = uploadResult.secure_url;
+      } catch (error) {
+        console.error("Failed to upload government approval:", error);
+        return res.status(500).json({
+          success: false,
+          error: "Failed to upload government approval document",
+          details: error.message,
+        });
+      }
+    }
+    if (req.files?.utilityBill?.length > 0) {
+      let utilityBillUrl;
+      try {
+        const utilityBillFile = req.files.utilityBill[0];
+        const uploadResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              resource_type: "auto", // Allows uploading images or PDFs
+              folder: "properties/documents",
+            },
+            (error, result) => {
+              if (error) {
+                console.error("Cloudinary utilityBill upload error:", error);
+                return reject(error);
+              }
+              resolve(result);
+            }
+          );
+
+          // Write file buffer to the upload stream
+          uploadStream.end(utilityBillFile.buffer);
+        });
+
+        utilityBillUrl = uploadResult.secure_url;
+      } catch (error) {
+        console.error("Failed to upload utility bill:", error);
+        return res.status(500).json({
+          success: false,
+          error: "Failed to upload utility bill document",
+          details: error.message,
+        });
+      }
+    }
+
     // Convert amenities string to array
     let amenitiesArray = [];
     if (amenities && typeof amenities === "string") {
@@ -182,6 +287,10 @@ const createProperty = async (req, res) => {
       agentFee,
       paymentFrequency: paymentFrequency.toLowerCase(),
       amenities: amenitiesArray.map((a) => a.toLowerCase()),
+      propertyIdNumber: propertyIdNumber || undefined,
+      ownershipDocument: ownershipDocumentUrl || undefined,
+      govtApproval: govtApprovalUrl || undefined,
+      utilityBill: utilityBillUrl || undefined,
     }).save();
 
     const populatedProperty = await newProperty.populate([
