@@ -1,6 +1,7 @@
 const Property = require("../schemas/Property");
 const PropertyImage = require("../schemas/PropertyImage");
 const Comment = require("../schemas/Comment");
+const PropertyDocuments = require("../schemas/PropertyDocuments");
 const cloudinary = require("cloudinary").v2;
 
 require("dotenv").config();
@@ -106,6 +107,9 @@ const createProperty = async (req, res) => {
     const userId = req.user.id;
 
     let imageIds = [];
+    let ownershipDocumentUrl = null;
+    let govtApprovalUrl = null;
+    let utilityBillUrl = null;
     if (req.files?.images.length > 0) {
       try {
         imageIds = await Promise.all(
@@ -159,7 +163,6 @@ const createProperty = async (req, res) => {
 
     // Upload ownershipDocument
     if (req.files?.ownershipDocument?.length > 0) {
-      let ownershipDocumentUrl;
       try {
         const ownershipDocumentFile = req.files.ownershipDocument[0];
         const uploadResult = await new Promise((resolve, reject) => {
@@ -195,7 +198,6 @@ const createProperty = async (req, res) => {
       }
     }
     if (req.files?.govtApproval?.length > 0) {
-      let govtApprovalUrl;
       try {
         const govtApprovalFile = req.files.govtApproval[0];
         const uploadResult = await new Promise((resolve, reject) => {
@@ -228,7 +230,6 @@ const createProperty = async (req, res) => {
       }
     }
     if (req.files?.utilityBill?.length > 0) {
-      let utilityBillUrl;
       try {
         const utilityBillFile = req.files.utilityBill[0];
         const uploadResult = await new Promise((resolve, reject) => {
@@ -271,6 +272,8 @@ const createProperty = async (req, res) => {
         .filter((item) => item !== ""); // Remove empty items
     }
 
+    // Create the property first
+
     const newProperty = await new Property({
       title: title.toLowerCase(),
       description,
@@ -287,16 +290,32 @@ const createProperty = async (req, res) => {
       agentFee,
       paymentFrequency: paymentFrequency.toLowerCase(),
       amenities: amenitiesArray.map((a) => a.toLowerCase()),
-      propertyIdNumber: propertyIdNumber || undefined,
-      ownershipDocument: ownershipDocumentUrl || undefined,
-      govtApproval: govtApprovalUrl || undefined,
-      utilityBill: utilityBillUrl || undefined,
+      propertyDocument: null, // Reference to PropertyDocuments ObjectId (will be set below)
     }).save();
 
+    // Save documents with correct propertyId reference
+    let propertyDocumentObj = null;
+    if (ownershipDocumentUrl || govtApprovalUrl || utilityBillUrl) {
+      propertyDocumentObj = await new PropertyDocuments({
+        propertyIdNumber,
+        ownershipDocument: ownershipDocumentUrl,
+        govtApproval: govtApprovalUrl,
+        utilityBill: utilityBillUrl,
+        propertyId: newProperty._id,
+      }).save();
+
+      // Update property with reference to PropertyDocuments ObjectId
+      newProperty.propertyDocument = propertyDocumentObj._id;
+      await newProperty.save();
+    }
+
+    // Populate property for response
     const populatedProperty = await newProperty.populate([
       { path: "images" },
       { path: "user", select: "-salt -hash" },
     ]);
+
+    // Save documents with correct propertyId reference
 
     res.status(201).json({
       success: true,
