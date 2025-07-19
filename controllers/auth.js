@@ -295,7 +295,7 @@ const loginUser = async (req, res, next) => {
     // Find user by email or username
     const user = await User.findOne(
       identifier.includes("@")
-        ? { email: identifier }
+        ? { email: identifier.toLowerCase() }
         : { username: identifier }
     );
 
